@@ -4,7 +4,8 @@
  * así una regla se escribe una sola vez.
  */
 var Motor = (function () {
-  var M = GEBRO.MODULOS;
+  // Se busca al usarlo (no al cargar) para que el orden de los archivos en Apps Script no importe
+  function Mods() { return GEBRO.MODULOS; }
 
   function num(v) {
     if (v === '' || v === null || v === undefined) return '';
@@ -47,7 +48,7 @@ var Motor = (function () {
   function copia(o) { var r = {}; for (var k in o) r[k] = o[k]; return r; }
 
   function siguienteId(db, modulo) {
-    var pre = M[modulo].prefijo, max = 0;
+    var pre = Mods()[modulo].prefijo, max = 0;
     (db[modulo] || []).forEach(function (f) {
       var n = parseInt(String(f.id).slice(pre.length), 10);
       if (n > max) max = n;
@@ -72,7 +73,7 @@ var Motor = (function () {
 
   function nuevaFila(modulo, hoy) {
     var f = {};
-    M[modulo].campos.forEach(function (c) {
+    Mods()[modulo].campos.forEach(function (c) {
       f[c.k] = c.def === 'hoy' ? hoy : (c.def !== undefined ? c.def : '');
     });
     return f;
@@ -80,7 +81,7 @@ var Motor = (function () {
 
   // Limpia tipos y valida campos obligatorios y referencias
   function normalizar(db, modulo, entrada, anterior, hoy) {
-    var def = M[modulo], f = { id: entrada.id || '' }, errores = [];
+    var def = Mods()[modulo], f = { id: entrada.id || '' }, errores = [];
     def.campos.forEach(function (c) {
       var v = entrada[c.k];
       // Campo no enviado: se conserva el valor anterior o se usa el de por defecto
@@ -121,7 +122,7 @@ var Motor = (function () {
   }
 
   function guardar(db, modulo, entrada, ctx) {
-    if (!M[modulo]) return { error: 'Módulo desconocido.' };
+    if (!Mods()[modulo]) return { error: 'Módulo desconocido.' };
     var anterior = entrada.id ? buscar(db, modulo, entrada.id) : null;
     if (entrada.id && !anterior) return { error: 'Ese registro ya no existe. Recargá la página.' };
     var r = normalizar(db, modulo, entrada, anterior, ctx && ctx.hoy);
@@ -205,11 +206,11 @@ var Motor = (function () {
     var f = buscar(db, modulo, id);
     if (!f) return { error: 'Ese registro ya no existe.' };
     // ¿Alguien lo usa?
-    for (var otro in M) {
-      var campos = M[otro].campos.filter(function (c) { return c.tipo === 'ref' && c.ref === modulo; });
+    for (var otro in Mods()) {
+      var campos = Mods()[otro].campos.filter(function (c) { return c.tipo === 'ref' && c.ref === modulo; });
       if (!campos.length) continue;
       var usado = (db[otro] || []).filter(function (o) { return campos.some(function (c) { return o[c.k] === id; }); });
-      if (usado.length) return { error: 'No se puede borrar: lo usan ' + usado.length + ' ' + (usado.length === 1 ? M[otro].singular : M[otro].nombre.toLowerCase()) + '. Cambiá su estado en lugar de borrarlo.' };
+      if (usado.length) return { error: 'No se puede borrar: lo usan ' + usado.length + ' ' + (usado.length === 1 ? Mods()[otro].singular : Mods()[otro].nombre.toLowerCase()) + '. Cambiá su estado en lugar de borrarlo.' };
     }
     if (modulo === 'caja' && f.origen) return { error: 'Este movimiento se generó desde ' + f.origen.split(':')[0] + '. Borralo desde ahí.' };
     var cambios = [{ m: modulo, op: 'del', fila: f }];
@@ -224,7 +225,7 @@ var Motor = (function () {
   }
 
   function accionDisponible(modulo, accion, fila) {
-    var a = (M[modulo].acciones || []).filter(function (x) { return x.id === accion; })[0];
+    var a = (Mods()[modulo].acciones || []).filter(function (x) { return x.id === accion; })[0];
     if (!a) return false;
     for (var k in a.si) if (a.si[k].indexOf(fila[k]) < 0) return false;
     return true;
