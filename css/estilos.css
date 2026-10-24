@@ -649,3 +649,11 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 .ficha-proyectos b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ficha-proyectos small { color: var(--tinta-3); font-size: 12.5px; }
 @media (max-width: 600px) { .proyectos-lista .avance { width: 56px; } .proyectos-lista .estado { display: none; } }
+@media (max-width: 600px) {
+  .ticket li { display: grid; grid-template-columns: 1fr auto; row-gap: 6px; }
+  .ticket .txt { grid-column: 1 / -1; }
+  .ticket .monto { min-width: 0; }
+  .escaner { padding: 12px 16px; }
+  .escaner .btn span { display: none; }
+  .escaner .btn { width: 46px; padding: 0; }
+}
