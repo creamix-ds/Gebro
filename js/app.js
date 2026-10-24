@@ -41,6 +41,7 @@
     carpeta: '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/>',
     enlace: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
     balanza: '<path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6a3 3 0 0 0 5 0zM19 8l-2.5 6a3 3 0 0 0 5 0z"/>',
+    check: '<rect x="3.5" y="3.5" width="17" height="17" rx="3"/><path d="m8 12.5 3 3 5.5-6"/>',
     tijera: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 18M8 16.5 20 6"/>',
     reloj: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     billete: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/>',
@@ -84,8 +85,8 @@
     var p = S.empresa && R[S.empresa.rubro] ? R[S.empresa.rubro].palabras : {};
     return p[k] || null;
   }
-  function nombreMod(m) { return (m === 'clientes' && palabra('clientes')) || M[m].nombre; }
-  function singularMod(m) { return (m === 'clientes' && palabra('cliente')) || M[m].singular; }
+  function nombreMod(m) { return palabra(m) || M[m].nombre; }
+  function singularMod(m) { return palabra(M[m].singular) || (m === 'clientes' && palabra('cliente')) || M[m].singular; }
   function etiquetaCampo(m, c) {
     if (c.ref === 'clientes' && palabra('cliente')) return palabra('cliente').replace(/^./, function (x) { return x.toUpperCase(); });
     return c.label;
@@ -189,9 +190,10 @@
       ferreteria: [['Venta por metro, kilo o unidad', 'con lector de código de barras'], ['Presupuestos', 'para obras y clientes'], ['Stock y reposición', 'con aviso de faltantes'], ['Proveedores', 'y caja diaria']],
       farmacia: [['Vencimientos de medicamentos', 'con aviso de los próximos 90 días'], ['Venta libre o bajo receta', 'marcado en cada producto'], ['Obra social', 'en la ficha de cada cliente'], ['Lector de códigos', 'para vender en segundos']],
       contadores: [['Vencimientos de cada cliente', 'IVA, Monotributo, Ganancias y más'], ['CUIT validado', 'y su constancia de ARCA a un clic'], ['Accesos directos a ARCA', 'con Clave Fiscal'], ['Honorarios', 'a cobrar y cobrados, por cliente']],
+      freelancer: [['Cada cliente con sus proyectos', 'todo en la misma ficha'], ['Avance y fecha de entrega', 'de cada proyecto'], ['Tareas y horas trabajadas', 'para saber cuánto te lleva cada uno'], ['Anticipos y saldos', 'lo cobrado y lo que falta cobrar']],
       abogados: [['Expedientes', 'con carátula, fuero y juzgado'], ['Agenda de plazos y audiencias', 'para que no se pase ninguno'], ['Constitución Nacional', 'a un clic desde el sistema'], ['Honorarios', 'y anticipos por cliente']]
     };
-    var demoTxt = { hoteleria: 'Probar la demo de hotel', comercio: 'Probar la demo de comercio', servicios: 'Probar la demo de turnos', ferreteria: 'Probar la demo de ferretería', farmacia: 'Probar la demo de farmacia', contadores: 'Probar la demo contable', abogados: 'Probar la demo jurídica' };
+    var demoTxt = { hoteleria: 'Probar la demo de hotel', comercio: 'Probar la demo de comercio', servicios: 'Probar la demo de turnos', ferreteria: 'Probar la demo de ferretería', farmacia: 'Probar la demo de farmacia', contadores: 'Probar la demo contable', abogados: 'Probar la demo jurídica', freelancer: 'Probar la demo freelancer' };
 
     $app.innerHTML =
       '<div class="web">' +
@@ -430,7 +432,7 @@
       Reservado: 'e-ambar', Confirmado: 'e-verde', Atendido: 'e-gris', Ausente: 'e-rojo', Cancelado: 'e-rojo',
       Cobrado: 'e-verde', Ingreso: 'e-verde', Egreso: 'e-rojo',
       Enviado: 'e-azul', Aceptado: 'e-verde', Rechazado: 'e-rojo', Vencido: 'e-gris', Presentado: 'e-azul', Pagado: 'e-verde',
-      'A cobrar': 'e-ambar', 'En trámite': 'e-azul', 'Con sentencia': 'e-verde', Archivado: 'e-gris', Cumplido: 'e-verde', Libre: 'e-gris', 'Bajo receta': 'e-ambar', 'Receta archivada': 'e-rojo'
+      'A cobrar': 'e-ambar', 'En trámite': 'e-azul', 'Con sentencia': 'e-verde', Archivado: 'e-gris', Cumplido: 'e-verde', Libre: 'e-gris', Propuesta: 'e-ambar', 'En revisión': 'e-ambar', Entregado: 'e-verde', Pausado: 'e-gris', Hecha: 'e-verde', 'Bajo receta': 'e-ambar', 'Receta archivada': 'e-rojo'
     };
     return v ? '<span class="estado ' + (mapa[v] || 'e-gris') + '">' + esc(v) + '</span>' : '';
   }
@@ -440,7 +442,7 @@
     var h = hoy(), html = '', r = S.empresa.rubro;
     var saludo = cabecera(S.empresa.nombre, fLarga(h).replace(/^./, function (c) { return c.toUpperCase(); }),
       tiene('reservas') ? botonNuevo('reservas', 'Nueva reserva') : tiene('turnos') ? botonNuevo('turnos', 'Nuevo turno') : tiene('ventas') ? botonVentaRapida() :
-      tiene('vencimientos') ? botonNuevo('vencimientos', 'Nuevo vencimiento') : tiene('plazos') ? botonNuevo('plazos', 'Nuevo plazo o audiencia') : '');
+      tiene('proyectos') ? botonNuevo('proyectos', 'Nuevo proyecto') : tiene('vencimientos') ? botonNuevo('vencimientos', 'Nuevo vencimiento') : tiene('plazos') ? botonNuevo('plazos', 'Nuevo plazo o audiencia') : '');
     html += saludo;
 
     if (tiene('reservas') && tiene('habitaciones')) {
@@ -530,6 +532,33 @@
       html += '<div class="columnas">' + panelLista('Presupuestos esperando respuesta', abiertos, function (q) {
         return { txt: et('clientes', q.cliente), sub: String(q.detalle).slice(0, 60) + (q.valido_hasta ? ' · válido hasta ' + fCorta(q.valido_hasta) : ''), der: '<span class="monto">' + plata(q.total) + '</span>', m: 'presupuestos', id: q.id };
       }, 'No hay presupuestos pendientes.', '<a class="btn btn-3 btn-chico" href="' + base() + '/presupuestos">Ver todos</a>') + '<div></div></div>';
+    }
+
+    if (tiene('proyectos')) {
+      var activos = filas('proyectos').filter(function (p) { return p.estado === 'En curso' || p.estado === 'En revisión'; })
+        .sort(function (a, b) { return (a.entrega || '9') < (b.entrega || '9') ? -1 : 1; });
+      var aCobrar = tiene('honorarios') ? filas('honorarios').filter(function (x) { return x.estado === 'A cobrar'; }) : [];
+      var cobradoMes = filas('caja').filter(function (c) { return c.tipo === 'Ingreso' && mesDe(c.fecha) === mesDe(h); });
+      var tPend = tiene('tareas') ? filas('tareas').filter(function (t) { return t.estado !== 'Hecha'; }).sort(function (a, b) { return (a.fecha || '9') < (b.fecha || '9') ? -1 : 1; }) : [];
+      html += '<div class="cifras">' + cifra('Proyectos activos', activos.length, (function (n) { return n + (n === 1 ? ' propuesta enviada' : ' propuestas enviadas'); })(filas('proyectos').filter(function (p) { return p.estado === 'Propuesta'; }).length)) +
+        cifra('Entregas en 14 días', activos.filter(function (p) { return p.entrega && p.entrega <= en(14); }).length, activos.filter(function (p) { return p.entrega && p.entrega < h; }).length + ' atrasadas') +
+        cifra('Cobrado en ' + MESES[+h.slice(5, 7) - 1], plata(sumaM(cobradoMes)), cobradoMes.length + ' cobros') +
+        cifra('Falta cobrar', plata(sumaM(aCobrar)), aCobrar.length + ' pendientes') + '</div>';
+      html += '<section class="panel" style="margin-bottom:20px"><div class="panel-cab"><h2>Proyectos en curso</h2><div class="acciones"><a class="btn btn-3 btn-chico" href="' + base() + '/proyectos">Ver todos</a></div></div>' +
+        (activos.length ? '<ul class="lista proyectos-lista">' + activos.map(function (p) {
+          var atrasado = p.entrega && p.entrega < h;
+          return '<li class="clic" data-editar="proyectos:' + p.id + '"><div class="txt"><b>' + esc(p.nombre) + '</b><span>' + esc(et('clientes', p.cliente)) + ' · ' + esc(p.tipo || '') + '</span></div>' +
+            '<div class="avance" title="' + num(p.avance) + '% hecho"><i style="width:' + num(p.avance) + '%"></i></div><span class="avance-n">' + num(p.avance) + '%</span>' +
+            '<span class="estado ' + (atrasado ? 'e-rojo' : 'e-gris') + '">' + (p.entrega ? (atrasado ? 'Atrasado ' : 'Entrega ') + fCorta(p.entrega) : 'Sin fecha') + '</span></li>';
+        }).join('') + '</ul>' : '<p class="vacio">No tenés proyectos en curso. Tocá "Nuevo proyecto" para cargar uno.</p>') + '</section>';
+      html += '<div class="columnas">' + (tiene('tareas') ? panelLista('Tareas pendientes', tPend, function (t) {
+        var p = Motor.buscar(S.db, 'proyectos', t.proyecto);
+        return { hora: t.fecha ? (t.fecha === h ? 'Hoy' : fCorta(t.fecha)) : '', txt: t.tarea, sub: p ? p.nombre + ' · ' + et('clientes', p.cliente) : '',
+          der: '<button class="btn btn-2 btn-chico" data-accion="tareas:hecha:' + t.id + '">Hecha</button>', m: 'tareas', id: t.id };
+      }, 'No tenés tareas pendientes.', '<a class="btn btn-3 btn-chico" href="' + base() + '/tareas">Ver todas</a>') : '') +
+        (tiene('honorarios') ? panelLista('Por cobrar', aCobrar.sort(function (a, b) { return (a.vence || '9') < (b.vence || '9') ? -1 : 1; }), function (x) {
+          return { txt: et('clientes', x.cliente), sub: (x.proyecto ? et('proyectos', x.proyecto) + ' · ' : '') + x.concepto, der: '<button class="btn btn-1 btn-chico" data-accion="honorarios:cobrar:' + x.id + '">Cobrar ' + plata(x.monto) + '</button>', m: 'honorarios', id: x.id };
+        }, 'No hay nada pendiente de cobro.') : '') + '</div>';
     }
 
     if (tiene('vencimientos')) {
@@ -808,11 +837,16 @@
       var hc = filas('honorarios').filter(function (x) { return x.estado === 'Cobrado'; }).map(function (x) {
         var mv = filas('caja').filter(function (c) { return c.origen === 'honorario:' + x.id; })[0]; return { cli: x.cliente, f: mv ? mv.fecha : '', monto: x.monto };
       }).filter(function (x) { return mesDe(x.f) === mes; });
-      bloques.push(barras('Honorarios cobrados por cliente', agrupar(hc, function (x) { return et('clientes', x.cli); }, 'monto').slice(0, 8), plata));
+      bloques.push(barras(nombreMod('honorarios') + ' cobrados por cliente', agrupar(hc, function (x) { return et('clientes', x.cli); }, 'monto').slice(0, 8), plata));
     }
     if (tiene('vencimientos')) {
       var vm3 = filas('vencimientos').filter(function (v) { return mesDe(v.fecha) === mes; });
       bloques.push(barras('Vencimientos del mes por obligación', agrupar(vm3, function (v) { return v.obligacion; }), function (n) { return n + (n === 1 ? ' vencimiento' : ' vencimientos'); }));
+    }
+    if (tiene('proyectos')) bloques.push(barras('Facturado por tipo de trabajo', agrupar(filas('proyectos').filter(function (p) { return p.estado !== 'Propuesta'; }), function (p) { return p.tipo || 'Otro'; }, 'presupuesto'), plata));
+    if (tiene('tareas')) {
+      var hp = filas('tareas').filter(function (t) { return mesDe(t.fecha || '') === mes && num(t.horas) > 0; });
+      bloques.push(barras('Horas trabajadas por proyecto', agrupar(hp, function (t) { return et('proyectos', t.proyecto); }, 'horas').slice(0, 8), function (n) { return n + ' h'; }));
     }
     if (tiene('expedientes')) bloques.push(barras('Expedientes por fuero', agrupar(filas('expedientes'), function (e) { return e.fuero || 'Sin fuero'; }), function (n) { return n + (n === 1 ? ' expediente' : ' expedientes'); }));
     bloques.push(barras('En qué se fue la plata', agrupar(egr, function (c) { return c.concepto; }, 'monto').slice(0, 6), plata));
@@ -932,6 +966,28 @@
       extra += '<div class="nota cuit"><span>CUIT <b>' + esc(fila.documento) + '</b></span><button type="button" class="btn btn-2 btn-chico" data-copiar="' + soloCuit + '">Copiar</button>' +
         '<a class="btn btn-2 btn-chico" href="https://seti.afip.gob.ar/padron-puc-constancia-internet/ConsultaConstanciaAction.do" target="_blank" rel="noopener">' + ic('enlace') + 'Constancia en ARCA</a></div>';
     }
+    if (fila && m === 'clientes' && tiene('proyectos')) {
+      var susP = filas('proyectos').filter(function (p) { return p.cliente === fila.id; });
+      var susC = tiene('honorarios') ? filas('honorarios').filter(function (x) { return x.cliente === fila.id; }) : [];
+      var cob = susC.filter(function (x) { return x.estado === 'Cobrado'; }).reduce(function (a, x) { return a + num(x.monto); }, 0);
+      var pen = susC.filter(function (x) { return x.estado !== 'Cobrado'; }).reduce(function (a, x) { return a + num(x.monto); }, 0);
+      extra += '<div class="ficha-cliente"><div class="ficha-cifras"><span><small>Proyectos</small><b>' + susP.length + '</b></span><span><small>Cobrado</small><b>' + plata(cob) + '</b></span><span><small>Falta cobrar</small><b>' + plata(pen) + '</b></span></div>' +
+        (susP.length ? '<ul class="ficha-proyectos">' + susP.map(function (p) {
+          return '<li data-abrir="proyectos:' + p.id + '"><div><b>' + esc(p.nombre) + '</b><small>' + esc(p.tipo || '') + (p.entrega ? ' · entrega ' + fCorta(p.entrega) : '') + '</small></div>' + chipEstado('', p.estado) + '</li>';
+        }).join('') + '</ul>' : '<p class="ayuda-chica">Todavía no tiene proyectos.</p>') +
+        '<button type="button" class="btn btn-2 btn-chico" data-nuevo-de="proyectos:cliente:' + fila.id + '">' + ic('mas') + 'Nuevo proyecto para este cliente</button></div>';
+    }
+    if (fila && m === 'proyectos') {
+      var tp = tiene('tareas') ? filas('tareas').filter(function (t) { return t.proyecto === fila.id; }) : [];
+      var cp = tiene('honorarios') ? filas('honorarios').filter(function (x) { return x.proyecto === fila.id; }) : [];
+      var horas = tp.reduce(function (a, t) { return a + num(t.horas); }, 0), cobP = cp.filter(function (x) { return x.estado === 'Cobrado'; }).reduce(function (a, x) { return a + num(x.monto); }, 0);
+      extra += '<div class="ficha-cliente"><div class="ficha-cifras"><span><small>Tareas hechas</small><b>' + tp.filter(function (t) { return t.estado === 'Hecha'; }).length + ' de ' + tp.length + '</b></span><span><small>Horas</small><b>' + horas + '</b></span><span><small>Cobrado</small><b>' + plata(cobP) + '</b></span></div>' +
+        (tp.length ? '<ul class="ficha-proyectos">' + tp.map(function (t) {
+          return '<li data-abrir="tareas:' + t.id + '"><div><b>' + esc(t.tarea) + '</b><small>' + (t.fecha ? fCorta(t.fecha) : 'sin fecha') + (t.horas !== '' ? ' · ' + t.horas + ' h' : '') + '</small></div>' + chipEstado('', t.estado) + '</li>';
+        }).join('') + '</ul>' : '') +
+        '<div style="display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn btn-2 btn-chico" data-nuevo-de="tareas:proyecto:' + fila.id + '">' + ic('mas') + 'Tarea</button>' +
+        '<button type="button" class="btn btn-2 btn-chico" data-nuevo-de="honorarios:proyecto:' + fila.id + ':' + fila.cliente + '">' + ic('mas') + 'Cobro</button></div></div>';
+    }
     if (fila && fila.origen) extra += '<div class="nota">Este movimiento se anotó solo desde ' + esc(fila.origen.split(':')[0]) + ' ' + esc(fila.origen.split(':')[1]) + '. Para cambiarlo, editá el original.</div>';
     var acciones = (def.acciones || []).filter(function (a) { return fila && Motor.accionDisponible(m, a.id, fila); });
     abrirCapa(
@@ -1030,6 +1086,14 @@
   /* ================= Eventos ================= */
   function conectar(raiz) {
     raiz.querySelectorAll('[data-nuevo]').forEach(function (b) { b.onclick = function () { abrirForm(b.dataset.nuevo); }; });
+    raiz.querySelectorAll('[data-abrir]').forEach(function (b) { b.onclick = function () { var p = b.dataset.abrir.split(':'); abrirForm(p[0], p[1]); }; });
+    raiz.querySelectorAll('[data-nuevo-de]').forEach(function (b) {
+      b.onclick = function () {
+        var p = b.dataset.nuevoDe.split(':'), pre = {}; pre[p[1]] = p[2];
+        if (p[3]) pre.cliente = p[3];
+        abrirForm(p[0], null, pre);
+      };
+    });
     raiz.querySelectorAll('[data-copiar]').forEach(function (b) {
       b.onclick = function () {
         var t = b.dataset.copiar;

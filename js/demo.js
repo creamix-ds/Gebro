@@ -14,7 +14,8 @@ var Demo = (function () {
     ferreteria: 'Ferretería El Tornillo',
     farmacia: 'Farmacia Del Centro',
     contadores: 'Estudio Contable Ríos & Asoc.',
-    abogados: 'Estudio Jurídico Méndez'
+    abogados: 'Estudio Jurídico Méndez',
+    freelancer: 'Martina Paz · Diseño y desarrollo'
   };
 
   function cuit(pre, dni) {
@@ -295,6 +296,50 @@ var Demo = (function () {
       });
       [['Alquiler del estudio', 610000, -12], ['Tasas judiciales y bonos', 84000, -5]].forEach(function (e) {
         aplicar(db, Motor.guardar(db, 'caja', { fecha: d(e[2]), tipo: 'Egreso', concepto: e[0], monto: e[1], medio: 'Transferencia' }, ctx()));
+      });
+    }
+
+    if (rubro === 'freelancer') {
+      [['Café Molienda', 'Lucas Ferreyra'], ['Inmobiliaria Sierras', 'Andrea Quiroga'], ['Estudio Contable Ríos', 'Pablo Ríos'], ['Bodega Las Lomas', 'Sofía Aguirre'],
+       ['Gimnasio Fuerza', 'Diego Medina'], ['Escuela de Idiomas Babel', 'Laura Vera']].forEach(function (c, i) {
+        aplicar(db, Motor.guardar(db, 'clientes', { nombre: c[0], notas: 'Contacto: ' + c[1], telefono: '249 4' + String(310000 + i * 41117), email: c[1].split(' ')[0].toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '') + '@ejemplo.com' }, ctx()));
+      });
+      [
+        [0, 'Tienda online', 'Sitio web', 'En curso', 850000, -40, 12, 65],
+        [0, 'Contenido para Instagram (octubre)', 'Marketing y redes', 'En curso', 220000, -20, 7, 50],
+        [1, 'Sitio web con buscador de propiedades', 'Sitio web', 'En revisión', 1200000, -60, 3, 90],
+        [2, 'Rediseño de logo y papelería', 'Diseño', 'Entregado', 320000, -45, -10, 100],
+        [3, 'Etiquetas para la línea reserva', 'Diseño', 'En curso', 480000, -15, 18, 30],
+        [3, 'Video institucional', 'Fotografía y video', 'Propuesta', 650000, -2, 40, 0],
+        [4, 'App de reservas de clases', 'Desarrollo', 'En curso', 1800000, -30, 35, 40],
+        [5, 'Landing para inscripciones 2027', 'Sitio web', 'Pausado', 380000, -25, 25, 20]
+      ].forEach(function (p) {
+        aplicar(db, Motor.guardar(db, 'proyectos', { nombre: p[1], cliente: db.clientes[p[0]].id, tipo: p[2], estado: p[3], presupuesto: p[4], inicio: d(p[5]), entrega: d(p[6]), avance: p[7] }, ctx()));
+      });
+      var tareasP = {
+        Y1: ['Armar catálogo de productos', 'Configurar Mercado Pago', 'Diseñar ficha de producto', 'Probar el carrito en celular'],
+        Y2: ['Calendario de posteos', 'Diseñar 8 placas', 'Editar 2 reels'],
+        Y3: ['Corregir textos de la home', 'Cargar 20 propiedades', 'Revisión final con el cliente'],
+        Y5: ['Bocetos de 3 etiquetas', 'Prueba de impresión'],
+        Y7: ['Pantalla de login', 'Calendario de clases', 'Pagos con tarjeta', 'Notificaciones'],
+        Y8: ['Formulario de inscripción']
+      };
+      Object.keys(tareasP).forEach(function (pid) {
+        tareasP[pid].forEach(function (t, i) {
+          var dd = -6 + i * 3 + Math.floor(rnd() * 3);
+          aplicar(db, Motor.guardar(db, 'tareas', { tarea: t, proyecto: pid, fecha: d(dd), horas: dd < 0 ? 2 + Math.floor(rnd() * 10) / 2 : '', estado: dd < 0 ? 'Hecha' : dd < 2 ? 'En curso' : 'Pendiente' }, ctx()));
+        });
+      });
+      db.proyectos.slice().forEach(function (p) {
+        if (p.estado === 'Propuesta') return;
+        var pres = Motor.num(p.presupuesto);
+        aplicar(db, Motor.guardar(db, 'honorarios', { cliente: p.cliente, proyecto: p.id, concepto: 'Anticipo 50 %', monto: pres / 2, vence: p.inicio }, ctx()));
+        aplicar(db, Motor.accion(db, 'honorarios', 'cobrar', db.honorarios[db.honorarios.length - 1].id, { hoy: p.inicio, medio: 'Transferencia' }));
+        aplicar(db, Motor.guardar(db, 'honorarios', { cliente: p.cliente, proyecto: p.id, concepto: 'Saldo a la entrega', monto: pres / 2, vence: p.entrega }, ctx()));
+        if (p.estado === 'Entregado') aplicar(db, Motor.accion(db, 'honorarios', 'cobrar', db.honorarios[db.honorarios.length - 1].id, { hoy: p.entrega, medio: 'Transferencia' }));
+      });
+      [['Suscripción Adobe y Figma', 95000, -9], ['Hosting y dominios de clientes', 62000, -4]].forEach(function (e) {
+        aplicar(db, Motor.guardar(db, 'caja', { fecha: d(e[2]), tipo: 'Egreso', concepto: e[0], monto: e[1], medio: 'Crédito' }, ctx()));
       });
     }
     return db;

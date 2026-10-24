@@ -630,3 +630,22 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 .acceso-grande:hover { background: var(--bosque-2); }
 .nota.cuit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .nota.cuit span { margin-right: auto; }
+
+/* ---------- Freelancer ---------- */
+.rubro:nth-child(8) { background: #FFE3CC; } .rubro:nth-child(8) li svg { color: #B8561B; }
+.proyectos-lista li { gap: 14px; }
+.avance { width: 120px; height: 8px; border-radius: 4px; background: var(--gris-suave); overflow: hidden; flex: none; }
+.avance i { display: block; height: 100%; background: var(--verde); border-radius: 4px; }
+.avance-n { width: 38px; font-weight: 700; font-size: 13.5px; text-align: right; flex: none; }
+.ficha-cliente { display: grid; gap: 12px; background: var(--hoja-2); border-radius: var(--r); padding: 14px; }
+.ficha-cifras { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.ficha-cifras span { display: grid; }
+.ficha-cifras small { color: var(--tinta-3); font-size: 12.5px; }
+.ficha-cifras b { font: 700 17px var(--display); }
+.ficha-proyectos { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.ficha-proyectos li { display: flex; align-items: center; gap: 10px; background: var(--hoja); border: 1px solid var(--linea); border-radius: 8px; padding: 8px 10px; cursor: pointer; }
+.ficha-proyectos li:hover { border-color: var(--tinta-3); }
+.ficha-proyectos li div { flex: 1; min-width: 0; }
+.ficha-proyectos b { display: block; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ficha-proyectos small { color: var(--tinta-3); font-size: 12.5px; }
+@media (max-width: 600px) { .proyectos-lista .avance { width: 56px; } .proyectos-lista .estado { display: none; } }

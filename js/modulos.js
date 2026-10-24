@@ -184,7 +184,8 @@ var GEBRO = (function () {
       nombre: 'Honorarios', singular: 'honorario', prefijo: 'O', icono: 'billete',
       campos: [
         { k: 'cliente', label: 'Cliente', tipo: 'ref', ref: 'clientes', req: true, lista: true },
-        { k: 'concepto', label: 'Concepto', tipo: 'texto', req: true, lista: true, ayuda: 'Abono mensual, liquidación, consulta…' },
+        { k: 'proyecto', label: 'Proyecto', tipo: 'ref', ref: 'proyectos', lista: true, rubros: ['freelancer'] },
+        { k: 'concepto', label: 'Concepto', tipo: 'texto', req: true, lista: true, ayuda: 'Abono mensual, anticipo, cuota, entrega final…' },
         { k: 'periodo', label: 'Período', tipo: 'texto', lista: true },
         { k: 'monto', label: 'Monto', tipo: 'dinero', req: true, lista: true },
         { k: 'vence', label: 'Vence el', tipo: 'fecha', lista: true },
@@ -220,6 +221,35 @@ var GEBRO = (function () {
       ],
       orden: 'fecha',
       acciones: [{ id: 'cumplido', label: 'Marcar cumplido', si: { estado: ['Pendiente'] } }]
+    },
+
+    /* ---------- Freelancer ---------- */
+    proyectos: {
+      nombre: 'Proyectos', singular: 'proyecto', prefijo: 'Y', icono: 'carpeta',
+      campos: [
+        { k: 'nombre', label: 'Nombre del proyecto', tipo: 'texto', req: true, lista: true },
+        { k: 'cliente', label: 'Cliente', tipo: 'ref', ref: 'clientes', req: true, lista: true },
+        { k: 'tipo', label: 'Tipo de trabajo', tipo: 'select', opciones: ['Sitio web', 'Diseño', 'Desarrollo', 'Marketing y redes', 'Fotografía y video', 'Consultoría', 'Otro'], lista: true },
+        { k: 'estado', label: 'Estado', tipo: 'select', opciones: ['Propuesta', 'En curso', 'En revisión', 'Entregado', 'Pausado'], def: 'En curso', lista: true },
+        { k: 'presupuesto', label: 'Presupuesto', tipo: 'dinero', lista: true },
+        { k: 'inicio', label: 'Empezó el', tipo: 'fecha', def: 'hoy' },
+        { k: 'entrega', label: 'Fecha de entrega', tipo: 'fecha', lista: true },
+        { k: 'avance', label: 'Avance (%)', tipo: 'numero', def: 0 },
+        { k: 'notas', label: 'Notas', tipo: 'largo' }
+      ],
+      orden: 'entrega'
+    },
+    tareas: {
+      nombre: 'Tareas', singular: 'tarea', prefijo: 'A', icono: 'check',
+      campos: [
+        { k: 'tarea', label: 'Tarea', tipo: 'texto', req: true, lista: true },
+        { k: 'proyecto', label: 'Proyecto', tipo: 'ref', ref: 'proyectos', req: true, lista: true },
+        { k: 'fecha', label: 'Para el', tipo: 'fecha', lista: true },
+        { k: 'horas', label: 'Horas trabajadas', tipo: 'numero', decimales: true, lista: true },
+        { k: 'estado', label: 'Estado', tipo: 'select', opciones: ['Pendiente', 'En curso', 'Hecha'], def: 'Pendiente', lista: true }
+      ],
+      orden: 'fecha',
+      acciones: [{ id: 'hecha', label: 'Marcar hecha', si: { estado: ['Pendiente', 'En curso'] } }]
     },
 
     /* ---------- Para todos ---------- */
@@ -272,6 +302,11 @@ var GEBRO = (function () {
       nombre: 'Estudio jurídico', para: 'Abogados y estudios jurídicos',
       modulos: ['plazos', 'expedientes', 'clientes', 'honorarios', 'caja'],
       palabras: {}
+    },
+    freelancer: {
+      nombre: 'Freelancer', para: 'Diseñadores, programadores, community managers y profesionales independientes',
+      modulos: ['proyectos', 'tareas', 'clientes', 'honorarios', 'caja'],
+      palabras: { honorarios: 'Cobros', honorario: 'cobro' }
     }
   };
 
@@ -289,7 +324,7 @@ var GEBRO = (function () {
 
   // Orden fijo del menú, sin importar en qué orden se activen
   var ORDEN_MENU = ['reservas', 'habitaciones', 'consumos', 'turnos', 'servicios', 'profesionales',
-    'vencimientos', 'plazos', 'expedientes', 'ventas', 'productos', 'presupuestos', 'proveedores',
+    'proyectos', 'tareas', 'vencimientos', 'plazos', 'expedientes', 'ventas', 'productos', 'presupuestos', 'proveedores',
     'clientes', 'honorarios', 'caja'];
 
   // ¿Este campo se muestra para el rubro de la empresa?

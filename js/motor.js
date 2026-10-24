@@ -137,7 +137,12 @@ var Motor = (function () {
         f.documento = soloNum.slice(0, 2) + '-' + soloNum.slice(2, 10) + '-' + soloNum.slice(10);
       }
     }
-    if (modulo === 'productos' && f.codigo) {
+    if (modulo === 'proyectos' && f.avance !== '') f.avance = Math.max(0, Math.min(100, Math.round(n0(f.avance))));
+    if (modulo === 'honorarios' && f.proyecto) {
+      var py = buscar(db, 'proyectos', f.proyecto);
+      if (py && py.cliente !== f.cliente) return { error: 'Ese proyecto es de ' + etiqueta(db, 'clientes', py.cliente) + ', no de este cliente.' };
+    }
+        if (modulo === 'productos' && f.codigo) {
       var mismo = (db.productos || []).filter(function (p) { return p.id !== f.id && String(p.codigo).trim() === f.codigo; })[0];
       if (mismo) return { error: 'El código ' + f.codigo + ' ya es de ' + mismo.nombre + '.' };
     }
@@ -295,6 +300,9 @@ var Motor = (function () {
     } else if (accionId === 'pagado') {
       f.estado = 'Pagado';
       msg = 'Marcado como pagado.';
+    } else if (accionId === 'hecha') {
+      f.estado = 'Hecha';
+      msg = 'Tarea hecha.';
     } else if (accionId === 'cumplido') {
       f.estado = 'Cumplido';
       msg = 'Listo, quedó cumplido.';
@@ -302,7 +310,7 @@ var Motor = (function () {
       f.estado = 'Cobrado';
       movimiento(db, 'honorario:' + id, {
         fecha: ctx.hoy, medio: ctx.medio, monto: n0(f.monto),
-        concepto: 'Honorarios ' + f.concepto + (f.periodo ? ' ' + f.periodo : '') + ' · ' + etiqueta(db, 'clientes', f.cliente)
+        concepto: (f.proyecto ? etiqueta(db, 'proyectos', f.proyecto) + ' · ' + f.concepto : 'Honorarios ' + f.concepto) + (f.periodo ? ' ' + f.periodo : '') + ' · ' + etiqueta(db, 'clientes', f.cliente)
       }, cambios);
       msg = 'Cobrado. Se anotaron ' + plata(f.monto) + ' en la caja.';
     }
