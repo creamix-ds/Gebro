@@ -1,7 +1,7 @@
 /* Gebro — datos editables */
 var CONFIG = {
   // URL de la implementación de Apps Script (termina en /exec). Vacío = solo funciona la demo.
-  API_URL: 'https://script.google.com/macros/s/AKfycbwIpgwzKPqSrQo9aNTpVX-RV0V-JmYY7vJNJlcO8Gk4XBShYr1qHD-iVsAAF5Qc8uVY/exec',
+  API_URL: 'https://script.google.com/macros/s/AKfycby6aQAYQ_fsy3CaxQlHQC8--PCwevEotmlqGnWeEgco2EnhbZfR36dDX4dwp0eSi_rW/exec',
   // ID de cliente de Google (termina en .apps.googleusercontent.com)
   GOOGLE_CLIENT_ID: '340172069418-grc7uvkq164vufqrhp668rot1jajatp1.apps.googleusercontent.com',
 
