@@ -36,6 +36,11 @@
     caja: '<path d="M3.5 7.5 12 3l8.5 4.5v9L12 21l-8.5-4.5z"/><path d="M3.5 7.5 12 12l8.5-4.5M12 12v9"/>',
     ticket: '<path d="M5 3h14v18l-3-2-2 2-2-2-2 2-2-2-3 2z"/><path d="M9 8h6M9 12h6"/>',
     camion: '<path d="M2.5 6h11v10h-11zM13.5 9h4l3 3.5V16h-7"/><circle cx="6.5" cy="17.5" r="1.8"/><circle cx="17" cy="17.5" r="1.8"/>',
+    documento: '<path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5M10 13h6M10 17h6"/>',
+    alarma: '<circle cx="12" cy="13" r="7.5"/><path d="M12 9.5V13l2.5 1.5M5 4 2.5 6.5M19 4l2.5 2.5"/>',
+    carpeta: '<path d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/>',
+    enlace: '<path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/>',
+    balanza: '<path d="M12 4v16M7 20h10M5 8h14M5 8l-2.5 6a3 3 0 0 0 5 0zM19 8l-2.5 6a3 3 0 0 0 5 0z"/>',
     tijera: '<circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><path d="M8 7.5 20 18M8 16.5 20 6"/>',
     reloj: '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
     billete: '<rect x="2.5" y="6" width="19" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/><path d="M6 9v.01M18 15v.01"/>',
@@ -57,9 +62,9 @@
   };
   function ic(n) { return '<svg class="i" viewBox="0 0 24 24" aria-hidden="true">' + (IC[n] || '') + '</svg>'; }
   function logo() {
-    return '<svg viewBox="0 0 32 32" aria-hidden="true"><rect width="32" height="32" rx="8" fill="var(--verde)"/><rect x="7" y="7" width="8" height="8" rx="2" fill="#fff"/><rect x="17" y="7" width="8" height="8" rx="2" fill="#fff"/><rect x="7" y="17" width="8" height="8" rx="2" fill="#fff"/><rect x="17" y="17" width="8" height="8" rx="2" fill="#F3C623"/></svg>';
+    return '<svg aria-hidden="true" viewBox="0 0 128 128"><rect width="128" height="128" rx="28" fill="#0F3D2E"/><g transform="translate(21 21) scale(.86)"><defs><linearGradient id="glogo" x1="12" y1="10" x2="88" y2="92" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#2CCFBF"/><stop offset="1" stop-color="#0A7EA4"/></linearGradient></defs><g fill="none" stroke="url(#glogo)" stroke-linecap="round" stroke-linejoin="round"><path d="M71.5 22.6 50 10.2 15.4 30.2V58" stroke-width="9"/><path d="M28.5 77.4 50 89.8l34.6-20V42" stroke-width="9"/><path d="M15 72.5h11c8 0 13-4 17-10.5M53 45.5c3-2 6-2.6 10-3l22-1.5" stroke-width="6"/></g><g fill="url(#glogo)" stroke="#0F3D2E" stroke-width="4"><circle cx="15" cy="72.5" r="9.5"/><circle cx="85" cy="44" r="9.5"/></g><circle cx="48" cy="54" r="10" fill="url(#glogo)"/></g></svg>';
   }
-  function marca(href) { return '<a class="marca" href="' + (href || '#/') + '" aria-label="Gebro, inicio">' + logo() + '<b>gebro</b></a>'; }
+  function marca(href) { return '<a class="marca" href="' + (href || '#/') + '" aria-label="Gebro, inicio">' + logo() + '<b>Gebro</b></a>'; }
 
   function aviso(txt, mal) {
     var d = document.createElement('div');
@@ -172,7 +177,7 @@
   }
 
   /* ================= LANDING ================= */
-  var vitrinaRubro = 'hoteleria', vitrinaDatos = {};
+  var vitrinaRubro = 'hoteleria', vitrinaDatos = {}, VITRINA = ['hoteleria', 'comercio', 'servicios'];
 
   function landing() {
     document.title = 'Gebro | Reservas, turnos, ventas y caja para tu negocio';
@@ -180,9 +185,13 @@
     var detalles = {
       hoteleria: [['Calendario de reservas', 'que avisa si se pisan dos huéspedes'], ['Check-in y check-out', 'con la cuenta de consumos lista'], ['Estado de cada habitación', 'libre, ocupada, en limpieza'], ['Señas y cobros', 'que se anotan solos en la caja']],
       comercio: [['Ventas en segundos', 'que descuentan el stock solas'], ['Aviso de reposición', 'cuando un producto baja del mínimo'], ['Proveedores', 'con sus datos a mano'], ['Caja diaria', 'por medio de pago']],
-      servicios: [['Agenda por profesional', 'con los horarios de cada uno'], ['Turnos sin superposición', 'según la duración del servicio'], ['Atendido o ausente', 'en un toque, y se cobra'], ['Fichas de pacientes', 'y clientes con su historial']]
+      servicios: [['Agenda por profesional', 'con los horarios de cada uno'], ['Turnos sin superposición', 'según la duración del servicio'], ['Atendido o ausente', 'en un toque, y se cobra'], ['Fichas de pacientes', 'y clientes con su historial']],
+      ferreteria: [['Venta por metro, kilo o unidad', 'con lector de código de barras'], ['Presupuestos', 'para obras y clientes'], ['Stock y reposición', 'con aviso de faltantes'], ['Proveedores', 'y caja diaria']],
+      farmacia: [['Vencimientos de medicamentos', 'con aviso de los próximos 90 días'], ['Venta libre o bajo receta', 'marcado en cada producto'], ['Obra social', 'en la ficha de cada cliente'], ['Lector de códigos', 'para vender en segundos']],
+      contadores: [['Vencimientos de cada cliente', 'IVA, Monotributo, Ganancias y más'], ['CUIT validado', 'y su constancia de ARCA a un clic'], ['Accesos directos a ARCA', 'con Clave Fiscal'], ['Honorarios', 'a cobrar y cobrados, por cliente']],
+      abogados: [['Expedientes', 'con carátula, fuero y juzgado'], ['Agenda de plazos y audiencias', 'para que no se pase ninguno'], ['Constitución Nacional', 'a un clic desde el sistema'], ['Honorarios', 'y anticipos por cliente']]
     };
-    var demoTxt = { hoteleria: 'Probar la demo de hotel', comercio: 'Probar la demo de comercio', servicios: 'Probar la demo de turnos' };
+    var demoTxt = { hoteleria: 'Probar la demo de hotel', comercio: 'Probar la demo de comercio', servicios: 'Probar la demo de turnos', ferreteria: 'Probar la demo de ferretería', farmacia: 'Probar la demo de farmacia', contadores: 'Probar la demo contable', abogados: 'Probar la demo jurídica' };
 
     $app.innerHTML =
       '<div class="web">' +
@@ -194,12 +203,12 @@
       '<main>' +
       '<section class="heroe"><div class="envase">' +
       '<div><h1><span class="rengln">Reservas, turnos,</span><span class="rengln">ventas y caja.</span><span class="rengln">Todo en un lugar.</span></h1>' +
-      '<p class="bajada">Gebro se adapta a tu rubro: el hotel ve sus habitaciones, el comercio su stock y el consultorio su agenda. Cada movimiento queda anotado en la caja sin que lo cargues dos veces.</p>' +
+      '<p class="bajada">Gebro se adapta a tu rubro: el hotel ve sus habitaciones, la ferretería su stock, el contador los vencimientos de sus clientes y el abogado sus plazos. Cada movimiento queda anotado en la caja sin que lo cargues dos veces.</p>' +
       '<div class="botones"><a class="btn btn-1 btn-grande" href="#/demo/hoteleria" id="heroe-demo">' + demoTxt.hoteleria + '</a>' +
       '<a class="btn btn-2 btn-grande" href="' + wa + '" target="_blank" rel="noopener">' + ic('whatsapp') + 'Consultar por WhatsApp</a></div>' +
       '<p class="chico">La demo usa datos de ejemplo y funciona sin registrarte.</p></div>' +
       '<div class="vitrina" aria-label="Vista previa del sistema">' +
-      '<div class="vitrina-tabs" role="tablist">' + Object.keys(R).map(function (k) {
+      '<div class="vitrina-tabs" role="tablist">' + VITRINA.map(function (k) {
         return '<button role="tab" data-r="' + k + '" aria-selected="' + (k === vitrinaRubro) + '">' + { hoteleria: 'Hotel', comercio: 'Comercio', servicios: 'Consultorio' }[k] + '</button>';
       }).join('') + '</div>' +
       '<div class="vitrina-cuerpo" id="vitrina"></div>' +
@@ -208,8 +217,8 @@
       '</div></section>' +
 
       '<section class="seccion" id="rubros"><div class="envase">' +
-      '<h2>Un sistema, tres formas de trabajar</h2>' +
-      '<p class="intro">Elegís tu rubro y Gebro te muestra solo lo que usás. Si tu negocio mezcla cosas, como un hotel con tienda o un consultorio que vende productos, sumás los módulos que necesites.</p>' +
+      '<h2>Un sistema, hecho a la medida de cada rubro</h2>' +
+      '<p class="intro">Elegís tu rubro y Gebro te muestra solo lo que usás. Si tu negocio mezcla cosas, como una ferretería que hace presupuestos o un estudio que también cobra turnos, sumás los módulos que necesites.</p>' +
       '<div class="rubros">' + Object.keys(R).map(function (k) {
         return '<article class="rubro"><h3>' + R[k].nombre + '</h3><p class="para">' + R[k].para + '</p><ul>' +
           detalles[k].map(function (d) { return '<li>' + ic('ok') + '<span><b>' + d[0] + '</b> ' + d[1] + '</span></li>'; }).join('') +
@@ -253,7 +262,7 @@
       b.onclick = function () { vitrinaRubro = b.dataset.r; vitrina(); };
       b.onkeydown = function (e) {
         if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
-        var ks = Object.keys(R), i = ks.indexOf(vitrinaRubro) + (e.key === 'ArrowRight' ? 1 : -1);
+        var ks = VITRINA, i = ks.indexOf(vitrinaRubro) + (e.key === 'ArrowRight' ? 1 : -1);
         vitrinaRubro = ks[(i + ks.length) % ks.length]; vitrina();
         $app.querySelector('.vitrina-tabs [data-r="' + vitrinaRubro + '"]').focus();
       };
@@ -368,7 +377,10 @@
       '<div class="empresa"><b>' + esc(S.empresa.nombre) + '</b><span>' + esc(R[S.empresa.rubro] ? R[S.empresa.rubro].nombre : '') + (S.modo === 'demo' ? ' · demo' : '') + '</span></div>' +
       '<nav class="menu">' + lnk('inicio', 'Inicio', 'inicio') +
       activos().map(function (m) { return lnk(m, nombreMod(m), M[m].icono, m === 'productos' && reponer ? '<span class="cuenta" title="Productos para reponer">' + reponer + '</span>' : ''); }).join('') +
-      '<div class="menu-sep"></div>' + lnk('reportes', 'Reportes', 'reportes') + lnk('ajustes', 'Ajustes', 'ajustes') + '</nav>' +
+      '<div class="menu-sep"></div>' + lnk('reportes', 'Reportes', 'reportes') + lnk('ajustes', 'Ajustes', 'ajustes') +
+      ((GEBRO.ENLACES[S.empresa.rubro] || []).length ? '<div class="menu-sep"></div><p class="menu-titulo">Accesos directos</p>' + GEBRO.ENLACES[S.empresa.rubro].map(function (e) {
+        return '<a href="' + e.url + '" target="_blank" rel="noopener">' + ic(/Constituci/.test(e.nombre) ? 'balanza' : 'enlace') + '<span>' + esc(e.nombre) + '</span></a>';
+      }).join('') : '') + '</nav>' +
       '<div class="lateral-pie">' +
       (S.modo === 'demo' ? '<div class="cartel-demo"><b>Estás en la demo.</b> Probá todo lo que quieras: los cambios quedan solo en este navegador.</div>' +
         '<div class="usuario"><a class="btn btn-2 btn-chico" href="#/">' + ic('salir') + 'Salir de la demo</a></div>'
@@ -416,7 +428,9 @@
       Confirmada: 'e-verde', 'En curso': 'e-azul', Pendiente: 'e-ambar', Finalizada: 'e-gris', Cancelada: 'e-rojo',
       Disponible: 'e-verde', Ocupada: 'e-azul', Limpieza: 'e-ambar', Mantenimiento: 'e-rojo',
       Reservado: 'e-ambar', Confirmado: 'e-verde', Atendido: 'e-gris', Ausente: 'e-rojo', Cancelado: 'e-rojo',
-      Cobrado: 'e-verde', Ingreso: 'e-verde', Egreso: 'e-rojo'
+      Cobrado: 'e-verde', Ingreso: 'e-verde', Egreso: 'e-rojo',
+      Enviado: 'e-azul', Aceptado: 'e-verde', Rechazado: 'e-rojo', Vencido: 'e-gris', Presentado: 'e-azul', Pagado: 'e-verde',
+      'A cobrar': 'e-ambar', 'En trámite': 'e-azul', 'Con sentencia': 'e-verde', Archivado: 'e-gris', Cumplido: 'e-verde', Libre: 'e-gris', 'Bajo receta': 'e-ambar', 'Receta archivada': 'e-rojo'
     };
     return v ? '<span class="estado ' + (mapa[v] || 'e-gris') + '">' + esc(v) + '</span>' : '';
   }
@@ -425,7 +439,8 @@
   function vistaInicio() {
     var h = hoy(), html = '', r = S.empresa.rubro;
     var saludo = cabecera(S.empresa.nombre, fLarga(h).replace(/^./, function (c) { return c.toUpperCase(); }),
-      tiene('reservas') ? botonNuevo('reservas', 'Nueva reserva') : tiene('turnos') ? botonNuevo('turnos', 'Nuevo turno') : tiene('ventas') ? botonVentaRapida() : '');
+      tiene('reservas') ? botonNuevo('reservas', 'Nueva reserva') : tiene('turnos') ? botonNuevo('turnos', 'Nuevo turno') : tiene('ventas') ? botonVentaRapida() :
+      tiene('vencimientos') ? botonNuevo('vencimientos', 'Nuevo vencimiento') : tiene('plazos') ? botonNuevo('plazos', 'Nuevo plazo o audiencia') : '');
     html += saludo;
 
     if (tiene('reservas') && tiene('habitaciones')) {
@@ -491,8 +506,74 @@
         }, 'Tenés stock de todo.') : '') + '</div>';
     }
 
+    html += inicioNuevos(h);
     if (tiene('caja')) html += resumenCaja(mesDe(h), true);
     return html;
+  }
+
+  function inicioNuevos(h) {
+    var html = '', en = function (n) { return sumar(h, n); };
+    var sumaM = function (a, k) { return a.reduce(function (s, x) { return s + num(x[k || 'monto']); }, 0); };
+
+    if (tiene('productos') && S.empresa.rubro === 'farmacia') {
+      var porVencer = filas('productos').filter(function (p) { return p.vence && p.vence <= en(90); }).sort(function (a, b) { return a.vence < b.vence ? -1 : 1; });
+      html += '<div class="columnas">' + panelLista('Medicamentos por vencer', porVencer, function (p) {
+        return { txt: p.nombre, sub: (p.laboratorio || '') + ' · stock ' + p.stock, der: '<span class="estado ' + (p.vence < h ? 'e-rojo' : p.vence <= en(30) ? 'e-ambar' : 'e-gris') + '">' + (p.vence < h ? 'Vencido' : 'Vence ' + fCorta(p.vence)) + '</span>', m: 'productos', id: p.id };
+      }, 'No hay medicamentos que venzan en los próximos 90 días.') +
+        panelLista('Bajo receta', filas('productos').filter(function (p) { return p.receta && p.receta !== 'Libre'; }), function (p) {
+          return { txt: p.nombre, sub: (p.laboratorio || '') + ' · ' + plata(p.precio), der: chipEstado('', p.receta), m: 'productos', id: p.id };
+        }, 'No hay productos marcados como bajo receta.') + '</div>';
+    }
+
+    if (tiene('presupuestos')) {
+      var abiertos = filas('presupuestos').filter(function (q) { return q.estado === 'Enviado'; });
+      html += '<div class="columnas">' + panelLista('Presupuestos esperando respuesta', abiertos, function (q) {
+        return { txt: et('clientes', q.cliente), sub: String(q.detalle).slice(0, 60) + (q.valido_hasta ? ' · válido hasta ' + fCorta(q.valido_hasta) : ''), der: '<span class="monto">' + plata(q.total) + '</span>', m: 'presupuestos', id: q.id };
+      }, 'No hay presupuestos pendientes.', '<a class="btn btn-3 btn-chico" href="' + base() + '/presupuestos">Ver todos</a>') + '<div></div></div>';
+    }
+
+    if (tiene('vencimientos')) {
+      var pend = filas('vencimientos').filter(function (v) { return v.estado === 'Pendiente'; });
+      var atrasados = pend.filter(function (v) { return v.fecha < h; }), semana = pend.filter(function (v) { return v.fecha >= h && v.fecha <= en(7); });
+      var hon = tiene('honorarios') ? filas('honorarios').filter(function (x) { return x.estado === 'A cobrar'; }) : [];
+      html += '<div class="cifras">' + cifra('Vencen esta semana', semana.length, 'obligaciones pendientes') +
+        cifra('Atrasados', atrasados.length, atrasados.length ? 'revisalos hoy' : 'todo al día') +
+        cifra('Clientes', filas('clientes').length, filas('clientes').filter(function (c) { return c.condicion === 'Monotributo'; }).length + ' monotributistas') +
+        cifra('Honorarios a cobrar', plata(sumaM(hon)), hon.length + ' pendientes') + '</div>';
+      html += '<div class="columnas">' + panelLista('Próximos vencimientos', pend.filter(function (v) { return v.fecha <= en(15); }).sort(function (a, b) { return a.fecha < b.fecha ? -1 : 1; }), function (v) {
+        return { hora: fCorta(v.fecha), txt: et('clientes', v.cliente), sub: v.obligacion + (v.periodo ? ' ' + v.periodo : '') + (v.monto !== '' ? ' · ' + plata(v.monto) : ''),
+          der: v.fecha < h ? '<span class="estado e-rojo">Atrasado</span>' : '<button class="btn btn-2 btn-chico" data-accion="vencimientos:presentado:' + v.id + '">Presentado</button>', m: 'vencimientos', id: v.id };
+      }, 'No hay vencimientos en los próximos 15 días.', '<a class="btn btn-3 btn-chico" href="' + base() + '/vencimientos">Ver todos</a>') + panelArca() + '</div>';
+    }
+
+    if (tiene('plazos')) {
+      var pp = filas('plazos').filter(function (x) { return x.estado === 'Pendiente'; }).sort(function (a, b) { return (a.fecha + a.hora) < (b.fecha + b.hora) ? -1 : 1; });
+      var hoyP = pp.filter(function (x) { return x.fecha === h; }), venc = pp.filter(function (x) { return x.fecha < h; });
+      var hon2 = tiene('honorarios') ? filas('honorarios').filter(function (x) { return x.estado === 'A cobrar'; }) : [];
+      html += '<div class="cifras">' + cifra('Para hoy', hoyP.length, 'plazos y audiencias') + cifra('Próximos 7 días', pp.filter(function (x) { return x.fecha > h && x.fecha <= en(7); }).length, 'en agenda') +
+        cifra('Expedientes en trámite', filas('expedientes').filter(function (e) { return e.estado === 'En trámite'; }).length, filas('expedientes').length + ' en total') +
+        cifra('Honorarios a cobrar', plata(sumaM(hon2)), hon2.length + ' pendientes') + '</div>';
+      if (venc.length) html += '<p class="error" style="margin-bottom:16px">Hay ' + venc.length + ' plazo' + (venc.length > 1 ? 's' : '') + ' de días anteriores sin marcar como cumplido.</p>';
+      html += '<div class="columnas">' + panelLista('Agenda', pp.filter(function (x) { return x.fecha <= en(10); }), function (x) {
+        var e = Motor.buscar(S.db, 'expedientes', x.expediente);
+        return { hora: x.fecha === h ? (x.hora || 'Hoy') : fCorta(x.fecha), txt: x.tipo + (x.detalle ? ': ' + x.detalle : ''), sub: e ? e.caratula : '',
+          der: '<button class="btn btn-2 btn-chico" data-accion="plazos:cumplido:' + x.id + '">Cumplido</button>', m: 'plazos', id: x.id };
+      }, 'No hay plazos ni audiencias en los próximos 10 días.', '<a class="btn btn-3 btn-chico" href="' + base() + '/plazos">Ver agenda</a>') + panelLegal() + '</div>';
+    }
+    return html;
+  }
+
+  function panelArca() {
+    var e = GEBRO.ENLACES.contadores;
+    return '<section class="panel panel-acceso"><div class="panel-cab"><h2>ARCA</h2></div><div class="panel-cuerpo">' +
+      '<p>Accesos directos a los servicios de ARCA. Se abren en otra pestaña con tu Clave Fiscal.</p><div class="accesos">' + e.map(function (x) {
+        return '<a class="btn btn-2" href="' + x.url + '" target="_blank" rel="noopener">' + ic('enlace') + esc(x.nombre) + '</a>';
+      }).join('') + '</div><p class="ayuda-chica">En la ficha de cada cliente tenés su CUIT para copiar y el botón para ver su constancia.</p></div></section>';
+  }
+  function panelLegal() {
+    var e = GEBRO.ENLACES.abogados[0];
+    return '<section class="panel panel-acceso"><div class="panel-cab"><h2>Consulta rápida</h2></div><div class="panel-cuerpo">' +
+      '<a class="acceso-grande" href="' + e.url + '" target="_blank" rel="noopener">' + ic('balanza') + '<span><b>Constitución Nacional</b><small>Texto oficial en InfoLEG</small></span></a></div></section>';
   }
 
   function panelLista(titulo, items, fn, vacio, acciones) {
@@ -536,7 +617,7 @@
 
   function vistaTabla(m) {
     var def = M[m], q = (S.busqueda[m] || '').toLowerCase(), filtro = S.filtros[m] || '';
-    var campos = def.campos.filter(function (c) { return c.lista; });
+    var campos = def.campos.filter(function (c) { return c.lista && GEBRO.campoVisible(c, S.empresa.rubro); });
     var cEstado = def.campos.filter(function (c) { return (c.k === 'estado' || c.k === 'tipo' || c.k === 'categoria') && c.lista; })[0];
     var opciones = cEstado ? (cEstado.opciones || unicos(filas(m).map(function (f) { return f[cEstado.k]; }))) : [];
     var lista = filas(m).slice();
@@ -723,6 +804,17 @@
       var tm2 = filas('turnos').filter(function (t) { return mesDe(t.fecha) === mes && t.estado === 'Atendido'; });
       bloques.push(barras('Turnos atendidos por profesional', agrupar(tm2, function (t) { return et('profesionales', t.profesional); }), function (n) { return n + ' turnos'; }));
     }
+    if (tiene('honorarios')) {
+      var hc = filas('honorarios').filter(function (x) { return x.estado === 'Cobrado'; }).map(function (x) {
+        var mv = filas('caja').filter(function (c) { return c.origen === 'honorario:' + x.id; })[0]; return { cli: x.cliente, f: mv ? mv.fecha : '', monto: x.monto };
+      }).filter(function (x) { return mesDe(x.f) === mes; });
+      bloques.push(barras('Honorarios cobrados por cliente', agrupar(hc, function (x) { return et('clientes', x.cli); }, 'monto').slice(0, 8), plata));
+    }
+    if (tiene('vencimientos')) {
+      var vm3 = filas('vencimientos').filter(function (v) { return mesDe(v.fecha) === mes; });
+      bloques.push(barras('Vencimientos del mes por obligación', agrupar(vm3, function (v) { return v.obligacion; }), function (n) { return n + (n === 1 ? ' vencimiento' : ' vencimientos'); }));
+    }
+    if (tiene('expedientes')) bloques.push(barras('Expedientes por fuero', agrupar(filas('expedientes'), function (e) { return e.fuero || 'Sin fuero'; }), function (n) { return n + (n === 1 ? ' expediente' : ' expedientes'); }));
     bloques.push(barras('En qué se fue la plata', agrupar(egr, function (c) { return c.concepto; }, 'monto').slice(0, 6), plata));
     html += '<div class="columnas">' + bloques.join('') + '</div>';
     return html;
@@ -808,7 +900,7 @@
       input = '<textarea id="' + id + '" name="' + c.k + '">' + esc(v) + '</textarea>';
     } else {
       var t = { fecha: 'date', hora: 'time', numero: 'number', dinero: 'number', email: 'email', tel: 'tel' }[c.tipo] || 'text';
-      input = '<input id="' + id + '" name="' + c.k + '" type="' + t + '" value="' + esc(v) + '"' + ro + (c.tipo === 'dinero' ? ' step="0.01" min="0" inputmode="decimal"' : c.tipo === 'numero' ? ' step="1" inputmode="numeric"' : '') + (c.tipo === 'hora' ? ' step="900"' : '') + '>';
+      input = '<input id="' + id + '" name="' + c.k + '" type="' + t + '" value="' + esc(v) + '"' + ro + (c.tipo === 'dinero' ? ' step="0.01" min="0" inputmode="decimal"' : c.tipo === 'numero' ? (c.decimales ? ' step="any" inputmode="decimal"' : ' step="1" inputmode="numeric"') : '') + (c.tipo === 'hora' ? ' step="900"' : '') + '>';
     }
     if (m === 'productos' && c.k === 'codigo') input = '<div class="con-boton">' + input + '<button type="button" class="btn btn-2 btn-icono" data-escanear-campo="' + id + '" aria-label="Escanear código con la cámara" title="Escanear con la cámara">' + ic('camara') + '</button></div>';
     return '<div class="campo">' + lab + input + ayuda + '</div>';
@@ -822,7 +914,7 @@
     if (m === 'caja' && !fila) titulo = 'Nuevo movimiento';
     if (fila && m === 'reservas') titulo = 'Reserva de ' + et('clientes', fila.cliente);
     if (fila && m === 'turnos') titulo = 'Turno de ' + et('clientes', fila.cliente);
-    var visibles = def.campos.filter(function (c) { return !(c.soloLectura && !fila) && !(c.k === 'origen' && !datos.origen); });
+    var visibles = def.campos.filter(function (c) { return GEBRO.campoVisible(c, S.empresa.rubro) && !(c.soloLectura && !fila) && !(c.k === 'origen' && !datos.origen); });
     var cuerpo = '', i = 0;
     while (i < visibles.length) {
       var c = visibles[i], s = visibles[i + 1];
@@ -834,6 +926,11 @@
     if (fila && m === 'reservas') {
       var cta = Motor.cuentaReserva(S.db, fila.id);
       extra = '<div class="nota">' + Motor.noches(fila.desde, fila.hasta) + ' noches · estadía ' + plata(cta.estadia) + ' · seña ' + plata(cta.sena) + ' · consumos pendientes ' + plata(cta.totalConsumos) + ' · <b>saldo ' + plata(cta.saldo) + '</b></div>';
+    }
+    if (fila && m === 'clientes' && S.empresa.rubro === 'contadores' && fila.documento) {
+      var soloCuit = String(fila.documento).replace(/\D/g, '');
+      extra += '<div class="nota cuit"><span>CUIT <b>' + esc(fila.documento) + '</b></span><button type="button" class="btn btn-2 btn-chico" data-copiar="' + soloCuit + '">Copiar</button>' +
+        '<a class="btn btn-2 btn-chico" href="https://seti.afip.gob.ar/padron-puc-constancia-internet/ConsultaConstanciaAction.do" target="_blank" rel="noopener">' + ic('enlace') + 'Constancia en ARCA</a></div>';
     }
     if (fila && fila.origen) extra += '<div class="nota">Este movimiento se anotó solo desde ' + esc(fila.origen.split(':')[0]) + ' ' + esc(fila.origen.split(':')[1]) + '. Para cambiarlo, editá el original.</div>';
     var acciones = (def.acciones || []).filter(function (a) { return fila && Motor.accionDisponible(m, a.id, fila); });
@@ -933,6 +1030,12 @@
   /* ================= Eventos ================= */
   function conectar(raiz) {
     raiz.querySelectorAll('[data-nuevo]').forEach(function (b) { b.onclick = function () { abrirForm(b.dataset.nuevo); }; });
+    raiz.querySelectorAll('[data-copiar]').forEach(function (b) {
+      b.onclick = function () {
+        var t = b.dataset.copiar;
+        (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function () { aviso('CUIT copiado: ' + t); }, function () { aviso('Copialo a mano: ' + t); });
+      };
+    });
     raiz.querySelectorAll('[data-venta-rapida]').forEach(function (b) { b.onclick = function () { ventaRapida(); }; });
     raiz.querySelectorAll('[data-escanear-campo]').forEach(function (b) {
       b.onclick = function () { var inp = document.getElementById(b.dataset.escanearCampo); abrirCamara(function (cod) { inp.value = cod; inp.dispatchEvent(new Event('input')); aviso('Código leído: ' + cod); return true; }); };
@@ -1138,6 +1241,15 @@
     });
   }
 
+  // EAN-13, EAN-8, UPC-A (12) y UPC-E (8): números con dígito verificador
+  function codigoValido(c) {
+    if (!/^\d{8}$|^\d{12,13}$/.test(c)) return false;
+    var d = c.split('').map(Number), ver = d.pop(), s = 0;
+    d.reverse().forEach(function (x, i) { s += x * (i % 2 === 0 ? 3 : 1); });
+    if ((10 - s % 10) % 10 === ver) return true;
+    return c.length === 8 && /^[01]/.test(c); // UPC-E usa otro cálculo; se acepta si arranca en 0 o 1
+  }
+
   // Abre la cámara y avisa cada código leído. Si onCodigo devuelve false, sigue escaneando.
   function abrirCamara(onCodigo, continuo) {
     if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return aviso('Este navegador no deja usar la cámara. Usá un lector o escribí el código.', true);
@@ -1155,10 +1267,17 @@
       var i = document.getElementById('vr-codigo'); if (i) i.focus();
     }
     cap.querySelector('button').onclick = cerrar;
+    var candidato = '', vecesCandidato = 0;
     function leido(cod) {
+      cod = String(cod || '').trim();
+      // Solo códigos de productos (EAN/UPC) con dígito verificador correcto
+      if (!codigoValido(cod)) return;
+      // Hay que leer el mismo número dos veces seguidas para aceptarlo
+      if (cod !== candidato) { candidato = cod; vecesCandidato = 1; return; }
+      if (++vecesCandidato < 2) return;
       var t = Date.now();
       if (cod === ultimo && t - ultimoT < 2500) return;
-      ultimo = cod; ultimoT = t;
+      ultimo = cod; ultimoT = t; candidato = ''; vecesCandidato = 0;
       var p = porCodigo(cod);
       document.getElementById('cam-txt').textContent = p ? 'Agregado: ' + p.nombre : 'Leí el código ' + cod + ', pero no está en tus productos.';
       cap.classList.add('ok'); setTimeout(function () { cap.classList.remove('ok'); }, 400);
@@ -1178,7 +1297,7 @@
       }
       var nativo = 'BarcodeDetector' in window ? BarcodeDetector.getSupportedFormats().catch(function () { return []; }) : Promise.resolve([]);
       return nativo.then(function (formatos) {
-        var queridos = ['ean_13', 'ean_8', 'upc_a', 'upc_e', 'code_128', 'code_39', 'itf'].filter(function (f) { return formatos.indexOf(f) >= 0; });
+        var queridos = ['ean_13', 'ean_8', 'upc_a', 'upc_e'].filter(function (f) { return formatos.indexOf(f) >= 0; });
         if (queridos.indexOf('ean_13') >= 0) {
           video.srcObject = st;
           return video.play().then(function () {
@@ -1191,7 +1310,7 @@
         }
         return cargarZXing().then(function () {
           var Z = ZXing, pistas = new Map();
-          pistas.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E, Z.BarcodeFormat.CODE_128, Z.BarcodeFormat.CODE_39, Z.BarcodeFormat.ITF]);
+          pistas.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E]);
           pistas.set(Z.DecodeHintType.TRY_HARDER, true);
           zx = new Z.BrowserMultiFormatReader(pistas, 200);
           zx.decodeFromStream(st, video, function (res) { if (res && vivo) leido(res.getText()); });

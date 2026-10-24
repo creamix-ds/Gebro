@@ -37,6 +37,7 @@ var Motor = (function () {
   }
   function plata(n) {
     n = Math.round(n0(n));
+    if (n < 0) return '−' + plata(-n);
     return '$' + String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '.');
   }
 
@@ -129,6 +130,13 @@ var Motor = (function () {
     if (r.errores.length) return { error: r.errores.join(' ') };
     var f = r.fila, cambios = [], avisos = [];
     if (!f.id) f.id = siguienteId(db, modulo);
+    if (modulo === 'clientes' && f.documento) {
+      var soloNum = String(f.documento).replace(/\D/g, '');
+      if (soloNum.length === 11) {
+        if (!cuitValido(soloNum)) return { error: 'El CUIT ' + f.documento + ' no es válido. Revisá los números.' };
+        f.documento = soloNum.slice(0, 2) + '-' + soloNum.slice(2, 10) + '-' + soloNum.slice(10);
+      }
+    }
     if (modulo === 'productos' && f.codigo) {
       var mismo = (db.productos || []).filter(function (p) { return p.id !== f.id && String(p.codigo).trim() === f.codigo; })[0];
       if (mismo) return { error: 'El código ' + f.codigo + ' ya es de ' + mismo.nombre + '.' };
@@ -198,6 +206,15 @@ var Motor = (function () {
     return { fila: f, cambios: cambios, avisos: avisos };
   }
 
+  function cuitValido(c) {
+    var pesos = [5, 4, 3, 2, 7, 6, 5, 4, 3, 2], suma = 0;
+    for (var i = 0; i < 10; i++) suma += (+c[i]) * pesos[i];
+    var v = 11 - suma % 11;
+    if (v === 11) v = 0;
+    if (v === 10) v = 9;
+    return v === +c[10];
+  }
+
   function findOrigen(db, origen) {
     return (db.caja || []).filter(function (m) { return m.origen === origen; })[0] || null;
   }
@@ -221,6 +238,7 @@ var Motor = (function () {
     }
     if (modulo === 'reservas') { movimiento(db, 'seña:' + f.id, null, cambios); movimiento(db, 'checkout:' + f.id, null, cambios); }
     if (modulo === 'turnos') movimiento(db, 'turno:' + f.id, null, cambios);
+    if (modulo === 'honorarios') movimiento(db, 'honorario:' + f.id, null, cambios);
     return { cambios: cambios };
   }
 
@@ -271,7 +289,22 @@ var Motor = (function () {
       msg = monto > 0 ? 'Turno atendido. Se anotaron ' + plata(monto) + ' en la caja.' : 'Turno marcado como atendido.';
     } else if (accionId === 'ausente') {
       f.estado = 'Ausente';
-      msg = 'Turno marcado como ausente.';
+      msg = 'Turno marcado como ausente.';    } else if (accionId === 'presentado') {
+      f.estado = 'Presentado';
+      msg = 'Marcado como presentado.';
+    } else if (accionId === 'pagado') {
+      f.estado = 'Pagado';
+      msg = 'Marcado como pagado.';
+    } else if (accionId === 'cumplido') {
+      f.estado = 'Cumplido';
+      msg = 'Listo, quedó cumplido.';
+    } else if (accionId === 'cobrar') {
+      f.estado = 'Cobrado';
+      movimiento(db, 'honorario:' + id, {
+        fecha: ctx.hoy, medio: ctx.medio, monto: n0(f.monto),
+        concepto: 'Honorarios ' + f.concepto + (f.periodo ? ' ' + f.periodo : '') + ' · ' + etiqueta(db, 'clientes', f.cliente)
+      }, cambios);
+      msg = 'Cobrado. Se anotaron ' + plata(f.monto) + ' en la caja.';
     }
     cambios.unshift({ m: modulo, op: 'set', fila: f });
     return { fila: f, cambios: cambios, mensaje: msg };
@@ -280,7 +313,7 @@ var Motor = (function () {
   return {
     num: n0, plata: plata, sumarDias: sumarDias, noches: noches, minutos: minutos, hhmm: hhmm,
     buscar: buscar, etiqueta: etiqueta, nuevaFila: nuevaFila, guardar: guardar, borrar: borrar,
-    accion: accion, accionDisponible: accionDisponible, cuentaReserva: cuentaReserva, activa: activa
+    accion: accion, accionDisponible: accionDisponible, cuitValido: cuitValido, cuentaReserva: cuentaReserva, activa: activa
   };
 })();
 if (typeof module !== 'undefined') module.exports = Motor;

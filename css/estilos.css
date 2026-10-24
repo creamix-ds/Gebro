@@ -606,3 +606,27 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 .camara.ok .camara-mira { border-color: #3EE08F; }
 .camara p { font-weight: 600; }
 @media (max-width: 600px) { .vr-pie .der { width: 100%; } .vr-pie .der .btn-1 { flex: 1; } }
+
+/* Logo nuevo (oct 2026): ícono verde + "Gebro" en Nunito */
+.marca svg { width: 34px; height: 34px; }
+.marca b { font: 800 25px/1 'Nunito', var(--display); letter-spacing: -.01em; }
+.lateral .marca svg, .web-cab .marca svg, .web-pie .marca svg { box-shadow: 0 0 0 1px rgba(255,255,255,.14); border-radius: 8px; }
+
+/* ---------- Rubros nuevos ---------- */
+.rubros { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
+.rubro:nth-child(4) { background: #F6DCD5; } .rubro:nth-child(4) li svg { color: #B4412F; }
+.rubro:nth-child(5) { background: #D5EBDF; } .rubro:nth-child(5) li svg { color: #1D6B50; }
+.rubro:nth-child(6) { background: #E4DDF3; } .rubro:nth-child(6) li svg { color: #5B3FA0; }
+.rubro:nth-child(7) { background: #E8E2D4; } .rubro:nth-child(7) li svg { color: #6B5320; }
+.menu-titulo { font-size: 12px; font-weight: 600; color: rgba(255,255,255,.5); padding: 4px 10px 2px; margin: 0; }
+.panel-acceso .panel-cuerpo { display: grid; gap: 14px; color: var(--tinta-2); }
+.accesos { display: grid; gap: 8px; }
+.accesos .btn { justify-content: flex-start; }
+.ayuda-chica { font-size: 13px; color: var(--tinta-3); }
+.acceso-grande { display: flex; gap: 16px; align-items: center; padding: 18px; border-radius: var(--r); background: var(--bosque); color: #fff; text-decoration: none; }
+.acceso-grande svg { width: 40px; height: 40px; color: var(--marcador); stroke-width: 1.5; }
+.acceso-grande b { display: block; font: 700 19px var(--display); }
+.acceso-grande small { color: rgba(255,255,255,.7); font-size: 13.5px; }
+.acceso-grande:hover { background: var(--bosque-2); }
+.nota.cuit { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.nota.cuit span { margin-right: auto; }
