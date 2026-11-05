@@ -82,9 +82,11 @@
   };
 
   function palabra(k) { // "clientes" → "Huéspedes" en hotelería
-    var p = S.empresa && R[S.empresa.rubro] ? R[S.empresa.rubro].palabras : {};
+    // Rubros del sistema: R[rubro].palabras. Rubros creados desde el panel: vienen en S.empresa.palabras.
+    var p = (S.empresa && S.empresa.palabras) || (S.empresa && R[S.empresa.rubro] ? R[S.empresa.rubro].palabras : null) || {};
     return p[k] || null;
   }
+  function nombreRubro() { return (S.empresa && (R[S.empresa.rubro] ? R[S.empresa.rubro].nombre : (S.empresa.rubroNombre || S.empresa.rubro))) || ''; }
   function nombreMod(m) { return palabra(m) || M[m].nombre; }
   function singularMod(m) { return palabra(M[m].singular) || (m === 'clientes' && palabra('cliente')) || M[m].singular; }
   function etiquetaCampo(m, c) {
@@ -120,7 +122,13 @@
       borrar: function (emp, modulo, id) { return post('borrar', { empresa: emp, modulo: modulo, id: id }); },
       accion: function (emp, modulo, acc, id, extra) { return post('accion', { empresa: emp, modulo: modulo, accion: acc, id: id, extra: extra || {} }); },
       ajustes: function (emp, cambios) { return post('ajustes', { empresa: emp, cambios: cambios }); },
-      usuarios: function (emp, op, datos) { return post('usuarios', { empresa: emp, op: op || 'listar', datos: datos || {} }); }
+      usuarios: function (emp, op, datos) { return post('usuarios', { empresa: emp, op: op || 'listar', datos: datos || {} }); },
+      // Panel de desarrollador (el servidor igual revalida que seas DEV en cada pedido)
+      devEmpresas: function () { return post('dev_empresas'); },
+      devRubros: function (datos) { return post('dev_rubros', datos || { op: 'listar' }); },
+      devCrearEmpresa: function (datos) { return post('dev_crearEmpresa', { datos: datos }); },
+      devAcceso: function (datos) { return post('dev_acceso', { datos: datos }); },
+      devEstado: function (datos) { return post('dev_estado', { datos: datos }); }
     };
   }
   function cerrarSesion() { try { localStorage.removeItem('gebro_sesion'); localStorage.removeItem('gebro_empresa'); } catch (e) { } S.empresa = null; S.db = null; S.usuario = null; }
@@ -131,6 +139,7 @@
     cerrarCapa();
     document.body.classList.remove('sin-scroll');
     if (h[0] === 'demo' && R[h[1]]) return entrarDemo(h[1], h[2] || 'inicio');
+    if (h[0] === 'dev') return entrarDev();
     if (h[0] === 'app') return entrarReal(h[1] || 'inicio');
     S.modo = null;
     landing();
@@ -376,7 +385,7 @@
     $app.innerHTML =
       '<div class="sis" id="sis">' +
       '<aside class="lateral" aria-label="Menú">' + marca(base() + '/inicio') +
-      '<div class="empresa"><b>' + esc(S.empresa.nombre) + '</b><span>' + esc(R[S.empresa.rubro] ? R[S.empresa.rubro].nombre : '') + (S.modo === 'demo' ? ' · demo' : '') + '</span></div>' +
+      '<div class="empresa"><b>' + esc(S.empresa.nombre) + '</b><span>' + esc(nombreRubro()) + (S.modo === 'demo' ? ' · demo' : '') + '</span></div>' +
       '<nav class="menu">' + lnk('inicio', 'Inicio', 'inicio') +
       activos().map(function (m) { return lnk(m, nombreMod(m), M[m].icono, m === 'productos' && reponer ? '<span class="cuenta" title="Productos para reponer">' + reponer + '</span>' : ''); }).join('') +
       '<div class="menu-sep"></div>' + lnk('reportes', 'Reportes', 'reportes') + lnk('ajustes', 'Ajustes', 'ajustes') +
@@ -384,6 +393,7 @@
         return '<a href="' + e.url + '" target="_blank" rel="noopener">' + ic(/Constituci/.test(e.nombre) ? 'balanza' : 'enlace') + '<span>' + esc(e.nombre) + '</span></a>';
       }).join('') : '') + '</nav>' +
       '<div class="lateral-pie">' +
+      (S.modo === 'real' && u.esDev ? '<div class="usuario" style="padding-bottom:6px"><a class="btn btn-2 btn-chico" href="#/dev" style="width:100%;justify-content:center">' + ic('ajustes') + 'Panel de desarrollador</a></div>' : '') +
       (S.modo === 'demo' ? '<div class="cartel-demo"><b>Estás en la demo.</b> Probá todo lo que quieras: los cambios quedan solo en este navegador.</div>' +
         '<div class="usuario"><a class="btn btn-2 btn-chico" href="#/">' + ic('salir') + 'Salir de la demo</a></div>'
         : '<div class="usuario"><span class="avatar">' + esc(iniciales(u.email)) + '</span><span title="' + esc(u.email) + '">' + esc(u.email) + '</span><button class="btn btn-3 btn-icono" id="salir" title="Cerrar sesión" aria-label="Cerrar sesión">' + ic('salir') + '</button></div>') +
@@ -871,7 +881,7 @@
     html += '<div class="ajustes">';
     html += '<section class="panel"><div class="panel-cab"><h2>Tu negocio</h2></div><div class="panel-cuerpo" style="display:grid;gap:14px">' +
       '<div class="par"><div class="campo"><label for="aj-nombre">Nombre</label><input id="aj-nombre" value="' + esc(S.empresa.nombre) + '"></div>' +
-      '<div class="campo"><label>Rubro principal</label><input value="' + esc(R[S.empresa.rubro].nombre) + '" readonly></div></div>' +
+      '<div class="campo"><label>Rubro principal</label><input value="' + esc(nombreRubro()) + '" readonly></div></div>' +
       '<div><button class="btn btn-1" data-guardar-nombre>Guardar nombre</button></div></div></section>';
     html += '<section class="panel"><div class="panel-cab"><h2>Módulos</h2><span style="color:var(--tinta-3);font-size:13.5px">Prendé los que uses, aunque sean de otro rubro</span></div>';
     var usados = {};
@@ -1386,6 +1396,149 @@
     });
   }
 
+
+  /* ================= PANEL DE DESARROLLADOR ================= */
+  function entrarDev() {
+    S.modo = 'real';
+    if (!CONFIG.API_URL || !CONFIG.GOOGLE_CLIENT_ID) return pantallaSinConfig();
+    var ses = leerLocal('gebro_sesion');
+    if (!ses || !ses.token || ses.vence < Date.now()) return pantallaIngreso();
+    S.api = apiReal();
+    $app.innerHTML = '<div class="cargando">Cargando panel…</div>';
+    S.api.yo().then(function (yo) {
+      S.usuario = yo;
+      if (!yo.esDev) { aviso('Esta cuenta no es de administrador.', true); location.hash = '#/app'; return; }
+      return Promise.all([S.api.devEmpresas(), S.api.devRubros({ op: 'listar' })]).then(function (res) {
+        pantallaDev(res[0].empresas || [], res[1]);
+      });
+    }).catch(function (e) { aviso(e.message, true); pantallaIngreso(); });
+  }
+
+  function pantallaDev(empresas, cat) {
+    var rubros = (cat && cat.rubros) || [], modulos = (cat && cat.modulos) || [];
+    var optRubros = rubros.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.nombre) + (r.origen === 'hoja' ? ' (propio)' : '') + '</option>'; }).join('');
+    var optPlanes = ['Prueba', 'Inicial', 'Negocio', 'A medida'];
+
+    var filas = empresas.map(function (e) {
+      return '<tr data-emp="' + esc(e.id) + '">' +
+        '<td><b>' + esc(e.nombre) + '</b><div class="sub">' + esc(e.id) + ' · ' + esc(e.rubroNombre) + '</div></td>' +
+        '<td>' + esc(e.dueno) + '<div class="sub">' + e.usuarios + ' con acceso</div></td>' +
+        '<td><select data-plan>' + optPlanes.map(function (p) { return '<option' + (p === e.plan ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></td>' +
+        '<td>' + chipEstado('', e.estado).replace('e-gris', e.estado === 'Activa' ? 'e-verde' : 'e-rojo') + '</td>' +
+        '<td style="white-space:nowrap">' +
+          '<button class="btn btn-3 btn-chico" data-toggle>' + (e.estado === 'Activa' ? 'Suspender' : 'Reactivar') + '</button> ' +
+          '<button class="btn btn-3 btn-chico" data-accesos>Accesos</button>' +
+        '</td></tr>' +
+        '<tr class="fila-accesos" data-accesos-de="' + esc(e.id) + '" hidden><td colspan="5"><div class="accesos-caja">Cargando…</div></td></tr>';
+    }).join('');
+
+    $app.innerHTML =
+      '<div class="dev-wrap">' +
+      '<header class="dev-top"><div><h1>Panel de desarrollador</h1><p>' + esc(S.usuario.email) + '</p></div>' +
+      '<a class="btn btn-2 btn-chico" href="#/app">← Volver al sistema</a></header>' +
+      '<div id="dev-msg"></div>' +
+
+      '<section class="panel"><div class="panel-cab"><h2>Empresas (' + empresas.length + ')</h2></div>' +
+      '<div class="tabla-scroll"><table class="tabla-dev"><thead><tr><th>Negocio</th><th>Dueño</th><th>Plan</th><th>Estado</th><th></th></tr></thead><tbody>' +
+      (filas || '<tr><td colspan="5" class="vacio">Todavía no hay empresas.</td></tr>') + '</tbody></table></div></section>' +
+
+      '<section class="panel"><div class="panel-cab"><h2>Crear empresa para un cliente</h2></div><div class="panel-cuerpo dev-form">' +
+      '<div class="campo"><label>Nombre del negocio</label><input id="ce-nombre" placeholder="Hotel Las Sierras"></div>' +
+      '<div class="campo"><label>Rubro</label><select id="ce-rubro">' + optRubros + '</select></div>' +
+      '<div class="campo"><label>Email del dueño (su cuenta de Google)</label><input id="ce-dueno" type="email" placeholder="cliente@gmail.com"></div>' +
+      '<button class="btn btn-1" id="ce-crear">Crear empresa</button></div></section>' +
+
+      '<section class="panel"><div class="panel-cab"><h2>Rubros (' + rubros.length + ')</h2><span style="color:var(--tinta-3);font-size:13.5px">Los “propios” los creás acá sin tocar el código</span></div>' +
+      '<div class="panel-cuerpo"><div class="chips-rubro">' + rubros.map(function (r) {
+        return '<span class="chip-rubro" title="' + esc(r.modulos.join(', ')) + '"><b>' + esc(r.nombre) + '</b> <span class="sub">' + r.modulos.length + ' módulos' + (r.origen === 'hoja' ? ' · propio' : '') + '</span></span>';
+      }).join('') + '</div></div>' +
+      '<div class="panel-cuerpo dev-form" style="border-top:1px solid var(--linea)">' +
+      '<h3 style="margin:0">Nuevo rubro</h3>' +
+      '<div class="par"><div class="campo"><label>Identificador</label><input id="nr-id" placeholder="veterinaria"></div>' +
+      '<div class="campo"><label>Nombre visible</label><input id="nr-nombre" placeholder="Veterinaria"></div></div>' +
+      '<div class="campo"><label>Para (descripción corta)</label><input id="nr-para" placeholder="Veterinarias y pet shops"></div>' +
+      '<div class="campo"><label>Módulos que incluye</label><div class="mods-check" id="nr-mods">' + modulos.map(function (m) {
+        return '<label class="mod-check"><input type="checkbox" value="' + esc(m.id) + '"><span>' + esc(m.nombre) + '</span></label>';
+      }).join('') + '</div></div>' +
+      '<div class="campo"><label>Renombres (opcional, uno por línea: <code>clientes=Pacientes</code>)</label><textarea id="nr-palabras" rows="2" placeholder="clientes=Pacientes"></textarea></div>' +
+      '<button class="btn btn-1" id="nr-crear">Crear rubro</button></div></section>' +
+      '</div>';
+
+    devBind(empresas);
+  }
+
+  function devMsg(txt, err) { var el = document.getElementById('dev-msg'); if (el) el.innerHTML = '<div class="alert ' + (err ? 'err' : 'ok') + '">' + esc(txt) + '</div>'; }
+  function recargarDev() { if (location.hash.replace(/^#\/?/, '').split('/')[0] === 'dev') entrarDev(); else location.hash = '#/dev'; }
+
+  function devBind(empresas) {
+    // Crear empresa
+    document.getElementById('ce-crear').onclick = function () {
+      var b = this, datos = {
+        nombre: document.getElementById('ce-nombre').value.trim(),
+        rubro: document.getElementById('ce-rubro').value,
+        dueno: document.getElementById('ce-dueno').value.trim()
+      };
+      if (!datos.nombre || !datos.dueno) return devMsg('Completá el nombre y el email del dueño.', true);
+      b.disabled = true; b.textContent = 'Creando…';
+      S.api.devCrearEmpresa(datos).then(function (r) { devMsg('Empresa creada: ' + r.empresa.nombre + ' (' + r.empresa.id + ').'); setTimeout(recargarDev, 700); })
+        .catch(function (e) { devMsg(e.message, true); b.disabled = false; b.textContent = 'Crear empresa'; });
+    };
+    // Crear rubro
+    document.getElementById('nr-crear').onclick = function () {
+      var b = this;
+      var mods = [].slice.call(document.querySelectorAll('#nr-mods input:checked')).map(function (c) { return c.value; });
+      var palabras = {};
+      document.getElementById('nr-palabras').value.split('\n').forEach(function (ln) {
+        var p = ln.split('='); if (p.length === 2 && p[0].trim() && p[1].trim()) palabras[p[0].trim()] = p[1].trim();
+      });
+      var datos = { op: 'crear', datos: { id: document.getElementById('nr-id').value, nombre: document.getElementById('nr-nombre').value, para: document.getElementById('nr-para').value, modulos: mods, palabras: palabras } };
+      b.disabled = true; b.textContent = 'Creando…';
+      S.api.devRubros(datos).then(function () { devMsg('Rubro creado.'); setTimeout(recargarDev, 700); })
+        .catch(function (e) { devMsg(e.message, true); b.disabled = false; b.textContent = 'Crear rubro'; });
+    };
+    // Acciones por empresa (delegado)
+    var tbody = document.querySelector('.tabla-dev tbody');
+    if (!tbody) return;
+    tbody.addEventListener('click', function (ev) {
+      var tr = ev.target.closest('tr[data-emp]'); if (!tr) return;
+      var id = tr.getAttribute('data-emp');
+      var e = empresas.filter(function (x) { return x.id === id; })[0];
+      if (ev.target.hasAttribute('data-toggle')) {
+        var nuevo = e.estado === 'Activa' ? 'Suspendida' : 'Activa';
+        S.api.devEstado({ empresa: id, estado: nuevo }).then(function () { devMsg(e.nombre + ' ahora está ' + nuevo + '.'); setTimeout(recargarDev, 600); }).catch(function (x) { devMsg(x.message, true); });
+      } else if (ev.target.hasAttribute('data-accesos')) {
+        var fila = document.querySelector('[data-accesos-de="' + id + '"]');
+        if (!fila) return;
+        fila.hidden = !fila.hidden;
+        if (!fila.hidden) cargarAccesosDev(id, fila.querySelector('.accesos-caja'));
+      }
+    });
+    tbody.addEventListener('change', function (ev) {
+      if (!ev.target.hasAttribute('data-plan')) return;
+      var tr = ev.target.closest('tr[data-emp]'); var id = tr.getAttribute('data-emp');
+      S.api.devEstado({ empresa: id, plan: ev.target.value }).then(function () { devMsg('Plan actualizado.'); }).catch(function (x) { devMsg(x.message, true); });
+    });
+  }
+
+  function cargarAccesosDev(id, caja) {
+    S.api.usuarios(id).then(function (r) {
+      caja.innerHTML = '<ul class="lista">' + (r.usuarios || []).map(function (u) {
+        return '<li><div class="txt"><b>' + esc(u.email) + '</b><span>' + esc(u.rol) + '</span></div>' +
+          (u.rol !== 'dueño' ? '<button class="btn btn-peligro btn-chico" data-quitar="' + esc(u.email) + '">Quitar</button>' : '') + '</li>';
+      }).join('') + '</ul>' +
+        '<div class="par" style="margin-top:8px"><input class="ac-mail" type="email" placeholder="nuevo@gmail.com"><button class="btn btn-2 btn-chico ac-sumar">Dar acceso</button></div>';
+      caja.querySelector('.ac-sumar').onclick = function () {
+        var mail = caja.querySelector('.ac-mail').value.trim();
+        if (!mail) return;
+        S.api.devAcceso({ empresa: id, op: 'sumar', email: mail }).then(function () { devMsg('Acceso agregado.'); cargarAccesosDev(id, caja); }).catch(function (x) { devMsg(x.message, true); });
+      };
+      caja.querySelectorAll('[data-quitar]').forEach(function (btn) {
+        btn.onclick = function () {
+          S.api.devAcceso({ empresa: id, op: 'quitar', email: btn.getAttribute('data-quitar') }).then(function () { devMsg('Acceso quitado.'); cargarAccesosDev(id, caja); }).catch(function (x) { devMsg(x.message, true); });
+        };
+      });
+    }).catch(function (x) { caja.innerHTML = '<p class="error">' + esc(x.message) + '</p>'; });
+  }
 
   ruta();
 })();
