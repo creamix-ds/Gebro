@@ -95,6 +95,9 @@
   }
   function activos() { return GEBRO.ORDEN_MENU.filter(function (m) { return S.empresa.modulos.indexOf(m) >= 0; }); }
   function tiene(m) { return S.empresa && S.empresa.modulos.indexOf(m) >= 0; }
+  // Dependencias: un módulo necesita los que referencia como obligatorios (según el rubro)
+  function refsReq(m) { return (M[m] ? M[m].campos : []).filter(function (c) { return c.tipo === 'ref' && c.req && GEBRO.campoVisible(c, S.empresa.rubro); }).map(function (c) { return c.ref; }); }
+  function cerrarDeps(lista) { var set = {}; (lista || []).forEach(function (m) { if (M[m]) set[m] = 1; }); var ch = true; while (ch) { ch = false; Object.keys(set).forEach(function (m) { refsReq(m).forEach(function (r) { if (!set[r]) { set[r] = 1; ch = true; } }); }); } return Object.keys(set); }
   function base() { return S.modo === 'demo' ? '#/demo/' + S.rubroDemo : '#/app'; }
   function et(m, id) { return Motor.etiqueta(S.db, m, id); }
   function filas(m) { return S.db[m] || []; }
@@ -1154,11 +1157,22 @@
     raiz.querySelectorAll('[data-mas]').forEach(function (b) { b.onclick = function () { S.limite[b.dataset.mas] = (S.limite[b.dataset.mas] || 100) + 200; dibujar(); }; });
     raiz.querySelectorAll('[data-modulo]').forEach(function (c) {
       c.onchange = function () {
-        var mods = Array.prototype.map.call(document.querySelectorAll('[data-modulo]:checked'), function (x) { return x.dataset.modulo; });
-        // Un módulo necesita los que referencia (reservas → habitaciones y clientes)
-        mods.slice().forEach(function (m) { M[m].campos.forEach(function (f) { if (f.tipo === 'ref' && f.req && mods.indexOf(f.ref) < 0) mods.push(f.ref); }); });
+        var m = c.dataset.modulo;
+        var marcados = Array.prototype.map.call(document.querySelectorAll('[data-modulo]:checked'), function (x) { return x.dataset.modulo; });
+        // Si lo estás apagando, no dejes el sistema roto: ¿algún módulo activo lo necesita?
+        if (!c.checked && cerrarDeps(marcados).indexOf(m) >= 0) {
+          var usan = marcados.filter(function (y) { return refsReq(y).indexOf(m) >= 0; });
+          c.checked = true;
+          return aviso('No se puede apagar ' + nombreMod(m) + ': lo necesita ' + usan.map(nombreMod).join(', ') + '. Apagá eso primero.', true);
+        }
+        // Al prender uno, se encienden solos los que necesita, en cascada
+        var mods = cerrarDeps(marcados);
         if (!mods.length) { c.checked = true; return aviso('Dejá al menos un módulo prendido.', true); }
-        S.api.ajustes(S.empresa.id, { modulos: mods }).then(function (r) { S.empresa = r.empresa; pantalla('ajustes'); aviso('Módulos actualizados.'); }).catch(function (e) { aviso(e.message, true); });
+        var sumados = mods.filter(function (x) { return marcados.indexOf(x) < 0; });
+        S.api.ajustes(S.empresa.id, { modulos: mods }).then(function (r) {
+          S.empresa = r.empresa; pantalla('ajustes');
+          aviso(sumados.length ? 'Se activó también ' + sumados.map(nombreMod).join(', ') + ' porque hace falta.' : 'Módulos actualizados.');
+        }).catch(function (e) { aviso(e.message, true); });
       };
     });
     raiz.querySelectorAll('[data-guardar-nombre]').forEach(function (b) {

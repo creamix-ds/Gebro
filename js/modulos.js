@@ -268,6 +268,11 @@ var GEBRO = (function () {
   };
 
   var RUBROS = {
+    general: {
+      nombre: 'General', para: 'Cualquier negocio: clientes, cobros y caja',
+      modulos: ['clientes', 'honorarios', 'caja'],
+      palabras: { honorarios: 'Cobros', honorario: 'cobro' }
+    },
     hoteleria: {
       nombre: 'Hotelería', para: 'Hoteles, hosterías, cabañas y departamentos',
       modulos: ['reservas', 'habitaciones', 'clientes', 'consumos', 'caja'],
