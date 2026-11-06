@@ -1320,12 +1320,17 @@
     if (e.key.length === 1 && /[0-9A-Za-z-]/.test(e.key)) lector.txt += e.key;
   });
 
-  function cargarZXing() {
-    if (window.ZXing) return Promise.resolve();
-    return new Promise(function (ok, mal) {
-      var s = document.createElement('script');
-      s.src = 'https://unpkg.com/@zxing/library@0.21.3/umd/index.min.js'; s.onload = ok; s.onerror = function () { mal(new Error('No se pudo cargar el lector de códigos.')); };
-      document.head.appendChild(s);
+  // Lector de códigos en WebAssembly (ZXing-C++): lee EAN/UPC reales en iPhone y PC,
+  // donde no existe el detector nativo del navegador. Mucho más fuerte que el ZXing de JS puro.
+  var WASM = null;
+  function cargarWasm() {
+    if (WASM) return Promise.resolve(WASM);
+    var base = 'https://cdn.jsdelivr.net/npm/zxing-wasm@2.1.0/dist/';
+    return import(base + 'es/reader/index.js').then(function (m) {
+      if (m.setZXingModuleOverrides) m.setZXingModuleOverrides({
+        locateFile: function (path, prefix) { return /\.wasm$/.test(path) ? base + 'reader/' + path : prefix + path; }
+      });
+      WASM = m; return m;
     });
   }
 
@@ -1346,10 +1351,9 @@
     cap.innerHTML = '<div class="camara-caja"><video playsinline muted></video><div class="camara-mira"></div>' +
       '<p id="cam-txt">Apuntá al código de barras</p><button class="btn btn-1">' + (continuo ? 'Listo' : 'Cerrar cámara') + '</button></div>';
     document.body.appendChild(cap);
-    var video = cap.querySelector('video'), stream = null, vivo = true, ultimo = '', ultimoT = 0, zx = null;
+    var video = cap.querySelector('video'), stream = null, vivo = true, ultimo = '', ultimoT = 0;
     function cerrar() {
       vivo = false;
-      if (zx) try { zx.reset(); } catch (e) { }
       if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
       cap.remove();
       var i = document.getElementById('vr-codigo'); if (i) i.focus();
@@ -1396,13 +1400,30 @@
             })();
           });
         }
-        return cargarZXing().then(function () {
-          var Z = ZXing, pistas = new Map();
-          pistas.set(Z.DecodeHintType.POSSIBLE_FORMATS, [Z.BarcodeFormat.EAN_13, Z.BarcodeFormat.EAN_8, Z.BarcodeFormat.UPC_A, Z.BarcodeFormat.UPC_E]);
-          pistas.set(Z.DecodeHintType.TRY_HARDER, true);
-          zx = new Z.BrowserMultiFormatReader(pistas, 200);
-          zx.decodeFromStream(st, video, function (res) { if (res && vivo) leido(res.getText()); });
-        });
+        // Sin detector nativo (iPhone, PC): leemos con ZXing-WASM sobre los cuadros de la cámara.
+        document.getElementById('cam-txt').textContent = 'Preparando el lector…';
+        return cargarWasm().then(function (Z) {
+          video.srcObject = st;
+          return video.play().then(function () {
+            document.getElementById('cam-txt').textContent = 'Apuntá al código de barras';
+            var lienzo = document.createElement('canvas'), cx = lienzo.getContext('2d', { willReadFrequently: true });
+            var FMT = ['EAN-13', 'EAN-8', 'UPC-A', 'UPC-E'];
+            (function bucle() {
+              if (!vivo) return;
+              var w = video.videoWidth, h = video.videoHeight;
+              if (!w || !h) { if (vivo) setTimeout(bucle, 200); return; }
+              // Cuadro completo (lee el código en cualquier posición), escalado a 1600 máx para no recargar el celular.
+              var esc = Math.min(1, 1600 / w), cw = Math.round(w * esc), ch = Math.round(h * esc);
+              lienzo.width = cw; lienzo.height = ch;
+              cx.drawImage(video, 0, 0, w, h, 0, 0, cw, ch);
+              // tryRotate: lee el código aunque lo sostengas vertical o inclinado.
+              Z.readBarcodes(cx.getImageData(0, 0, cw, ch), { tryHarder: true, tryRotate: true, formats: FMT })
+                .then(function (r) { if (r && r.length && vivo) leido(r[0].text); })
+                .catch(function () { })
+                .then(function () { if (vivo) setTimeout(bucle, 180); });
+            })();
+          });
+        }).catch(function () { document.getElementById('cam-txt').textContent = 'No se pudo cargar el lector. Escribí el código a mano.'; });
       });
     }).catch(function (e) {
       cerrar();
