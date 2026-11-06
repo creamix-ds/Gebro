@@ -953,6 +953,24 @@
     return '<div class="campo">' + lab + input + ayuda + '</div>';
   }
 
+  // Busca el nombre de un producto por su código de barras en el catálogo público Open Food Facts.
+  // Devuelve { nombre } o null. Nunca falla: si no encuentra o no hay internet, devuelve null.
+  function buscarCatalogo(codigo) {
+    codigo = String(codigo || '').replace(/\D/g, '');
+    if (!/^\d{8,13}$/.test(codigo)) return Promise.resolve(null);
+    var url = 'https://world.openfoodfacts.org/api/v2/product/' + codigo + '.json?fields=product_name,product_name_es,generic_name,brands';
+    return fetch(url).then(function (r) { return r.ok ? r.json() : null; }).then(function (j) {
+      if (!j || j.status !== 1 || !j.product) return null;
+      var p = j.product;
+      var nombre = String(p.product_name_es || p.product_name || p.generic_name || '').trim();
+      var marca = String(p.brands || '').split(',')[0].trim();
+      if (!nombre && !marca) return null;
+      if (!nombre) nombre = marca;
+      else if (marca && nombre.toLowerCase().indexOf(marca.toLowerCase()) < 0) nombre = marca + ' ' + nombre;
+      return { nombre: nombre.replace(/\s+/g, ' ').slice(0, 120) };
+    }).catch(function () { return null; });
+  }
+
   function abrirForm(m, id, preset) {
     var def = M[m], fila = id ? Motor.buscar(S.db, m, id) : null;
     if (id && !fila) return aviso('Ese registro ya no existe.', true);
@@ -1012,6 +1030,18 @@
     );
     conectar($capa);
     var form = document.getElementById('formulario');
+    // Producto nuevo con código escaneado: busco el nombre en el catálogo público y lo precargo.
+    if (!fila && m === 'productos' && datos.codigo && form.nombre && !form.nombre.value) {
+      var campoNom = form.nombre.closest('.campo') || form.nombre.parentNode;
+      var pista = document.createElement('div'); pista.className = 'ayuda-chica'; pista.textContent = 'Buscando el producto por su código…';
+      campoNom.appendChild(pista);
+      buscarCatalogo(datos.codigo).then(function (info) {
+        if (info && info.nombre && !form.nombre.value) {
+          form.nombre.value = info.nombre;
+          pista.textContent = 'Nombre sugerido del catálogo — revisalo y corregí si hace falta.';
+        } else { pista.remove(); }
+      });
+    }
     // Ayudas en vivo
     if (m === 'ventas') {
       var actualizar = function () {
