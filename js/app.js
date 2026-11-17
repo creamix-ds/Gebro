@@ -233,7 +233,7 @@
       '<section class="seccion" id="rubros"><div class="envase">' +
       '<h2>Un sistema, hecho a la medida de cada rubro</h2>' +
       '<p class="intro">Elegís tu rubro y Gebro te muestra solo lo que usás. Si tu negocio mezcla cosas, como una ferretería que hace presupuestos o un estudio que también cobra turnos, sumás los módulos que necesites.</p>' +
-      '<div class="rubros">' + Object.keys(R).map(function (k) {
+      '<div class="rubros">' + Object.keys(R).filter(function (k) { return detalles[k]; }).map(function (k) {
         return '<article class="rubro"><h3>' + R[k].nombre + '</h3><p class="para">' + R[k].para + '</p><ul>' +
           detalles[k].map(function (d) { return '<li>' + ic('ok') + '<span><b>' + d[0] + '</b> ' + d[1] + '</span></li>'; }).join('') +
           '</ul><a class="btn btn-2" href="#/demo/' + k + '">' + demoTxt[k] + '</a></article>';
