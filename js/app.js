@@ -254,7 +254,7 @@
       '<div class="planes">' + CONFIG.PLANES.map(function (p) {
         return '<article class="plan' + (p.destacado ? ' destacado' : '') + '">' + (p.destacado ? '<span class="etiqueta">El más elegido</span>' : '') +
           '<h3>' + esc(p.nombre) + '</h3><p class="precio">' + (p.precio ? plata(p.precio) + ' <small>por mes</small>' : 'A convenir') + '</p>' +
-          '<p>' + esc(p.para) + '</p><ul>' + p.incluye.map(function (x) { return '<li>' + ic('ok') + esc(x) + '</li>'; }).join('') + '</ul>' +
+          '<p>' + esc(p.para) + '</p><ul>' + (p.incluye || []).map(function (x) { return '<li>' + ic('ok') + esc(x) + '</li>'; }).join('') + '</ul>' +
           '<a class="btn ' + (p.destacado ? 'btn-1' : 'btn-2') + '" href="https://wa.me/' + CONFIG.WHATSAPP + '?text=' + encodeURIComponent('Hola, me interesa el plan ' + p.nombre + ' de Gebro.') + '" target="_blank" rel="noopener">' + (p.precio ? 'Quiero este plan' : 'Contame qué necesitás') + '</a></article>';
       }).join('') + '</div>' +
       '<p class="planes-nota">Precios finales en pesos argentinos.</p>' +
