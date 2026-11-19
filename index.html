@@ -9,24 +9,42 @@
 <meta property="og:title" content="Gebro — el sistema que se adapta a tu rubro">
 <meta property="og:description" content="Reservas, turnos, ventas y caja en un solo lugar. Hecho en Tandil por CreamixDS.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://creamix-ds.github.io/Gebro/">
-<meta property="og:image" content="https://creamix-ds.github.io/Gebro/img/og.png">
+<meta property="og:url" content="https://creamixds.com/Gebro/">
+<meta property="og:image" content="https://creamixds.com/Gebro/img/og.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="img/icono.svg">
 <link rel="icon" type="image/png" sizes="512x512" href="img/icono-512.png">
 <link rel="apple-touch-icon" href="img/icono-180.png">
+
+<!-- Conexión anticipada a los orígenes que vamos a usar (fuentes y backend de Apps Script) -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="preconnect" href="https://script.google.com">
+<link rel="preconnect" href="https://script.googleusercontent.com">
+<link rel="dns-prefetch" href="https://script.google.com">
+
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700;12..96,800&family=Nunito:wght@800&family=Instrument+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/estilos.css?v=16">
+
+<!-- Esqueleto de carga: se ve al instante y lo reemplaza app.js al terminar de dibujar. -->
+<style>
+.gb-boot{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:72vh;gap:20px}
+.gb-boot__logo{width:52px;height:52px;border-radius:15px;background:linear-gradient(135deg,#2CCFBF,#0A7EA4);box-shadow:0 8px 24px rgba(10,126,164,.25);animation:gb-pulse 1.1s ease-in-out infinite}
+.gb-boot__bar{width:150px;height:8px;border-radius:99px;background:rgba(127,150,140,.22);overflow:hidden;position:relative}
+.gb-boot__bar span{position:absolute;top:0;bottom:0;left:-40%;width:40%;border-radius:99px;background:linear-gradient(90deg,#2CCFBF,#0A7EA4);animation:gb-slide 1.15s ease-in-out infinite}
+@keyframes gb-pulse{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(.86);opacity:.55}}
+@keyframes gb-slide{0%{left:-40%}100%{left:100%}}
+@media (prefers-reduced-motion: reduce){.gb-boot__logo,.gb-boot__bar span{animation:none}}
+</style>
 </head>
 <body>
-<div id="app" aria-live="polite"></div>
+<div id="app" aria-live="polite"><div class="gb-boot" role="status" aria-label="Cargando Gebro"><div class="gb-boot__logo"></div><div class="gb-boot__bar"><span></span></div></div></div>
 <div id="capa"></div>
 <div id="avisos" role="status"></div>
 
+<!-- Scripts al final del body (posición original, estable). -->
 <script src="js/config.js?v=16"></script>
 <script src="js/modulos.js?v=16"></script>
 <script src="js/motor.js?v=16"></script>
