@@ -25,5 +25,37 @@ var CONFIG = {
       para: 'Si necesitás algo que tu rubro no trae.',
       incluye: ['Todo lo del plan Negocio', 'Módulos hechos para vos', 'Usuarios ilimitados', 'Carga inicial de datos']
     }
+  ],
+
+  // Pago anual: cuántos meses se regalan si pagan el año (0 = no se muestra la opción anual)
+  MESES_GRATIS_ANUAL: 0,
+
+  // Tabla "Compará los planes" (una columna por plan, en el mismo orden de PLANES). true = incluido, false = no.
+  COMPARACION: [
+    ['Usuarios', '1', 'Hasta 5', 'Ilimitados'],
+    ['Módulos de tu rubro', true, true, true],
+    ['Caja y reportes del mes', true, true, true],
+    ['Funciona en celular, tablet y PC', true, true, true],
+    ['Links de pago con Mercado Pago', true, true, true],
+    ['Módulos de otros rubros', false, true, true],
+    ['Copia de tus datos cuando la pidas', false, true, true],
+    ['Módulos hechos para vos', false, false, true],
+    ['Carga inicial de datos', false, false, true],
+    ['Soporte por WhatsApp', true, true, 'Prioritario']
+  ],
+
+  // "Módulos a la carta" de la página: se suman al plan Inicial. Precios PROPUESTOS en pesos por mes: cambialos.
+  // Los módulos igual los activa solo el administrador; esto arma el pedido por WhatsApp.
+  MODULOS_CARTA: [
+    { nombre: 'Presupuestos', detalle: 'Armá presupuestos y seguí cuáles se aceptan.', precio: 4000 },
+    { nombre: 'Lector de códigos de barras', detalle: 'Escaneá productos con la cámara del celular.', precio: 3000 },
+    { nombre: 'Proveedores', detalle: 'Datos y contacto de quién te vende cada cosa.', precio: 2500 },
+    { nombre: 'Vencimientos y alertas', detalle: 'Avisos de productos o trámites por vencer.', precio: 3500 },
+    { nombre: 'Honorarios y cobros', detalle: 'Seguí lo que falta cobrar a cada cliente.', precio: 3500 },
+    { nombre: 'Turnos y agenda', detalle: 'Agenda por profesional, sin superposiciones.', precio: 5000 },
+    { nombre: 'Proyectos y tareas', detalle: 'Avance, horas y entregas de cada trabajo.', precio: 4500 },
+    { nombre: 'Expedientes y plazos', detalle: 'Causas, audiencias y plazos para estudios jurídicos.', precio: 6000 },
+    { nombre: 'Reservas y habitaciones', detalle: 'Calendario, huéspedes, check-in y check-out.', precio: 7500 },
+    { nombre: 'Usuario extra', detalle: 'Una persona más con su propia cuenta.', precio: 2500 }
   ]
 };

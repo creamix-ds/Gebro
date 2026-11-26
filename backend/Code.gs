@@ -1191,8 +1191,9 @@ function devModulos_(email, req) {
  * Avisos (webhooks): <URL /exec>?mp=gebro  y  <URL /exec>?mp=negocio&e=<empresa>
  * =================================================================== */
 
-// Precio mensual EN PESOS de cada plan para el débito automático. COMPLETAR antes de usar (0 = no se puede pagar online).
-var PRECIOS_MP = { Inicial: 0, Crecimiento: 0, Pro: 0 };
+// Precio mensual EN PESOS de cada plan para el débito automático (0 o sin el plan = no se puede pagar online).
+// Tienen que ser los mismos nombres y precios que PLANES en js/config.js.
+var PRECIOS_MP = { Inicial: 15000, Negocio: 29000 };
 // Adónde vuelve el cliente después de pagar
 var WEB_URL = 'https://creamix-ds.github.io/Gebro/';
 var MP_API = 'https://api.mercadopago.com';

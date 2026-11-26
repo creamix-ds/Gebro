@@ -149,6 +149,7 @@
     var h = location.hash.replace(/^#\/?/, '').split('/').filter(Boolean);
     cerrarCapa();
     document.body.classList.remove('sin-scroll');
+    document.body.classList.remove('lp-body');
     if (h[0] === 'demo' && R[h[1]]) return entrarDemo(h[1], h[2] || 'inicio');
     if (h[0] === 'dev') return entrarDev();
     if (h[0] === 'app') return entrarReal(h[1] || 'inicio');
@@ -200,86 +201,202 @@
   /* ================= LANDING ================= */
   var vitrinaRubro = 'hoteleria', vitrinaDatos = {}, VITRINA = ['hoteleria', 'comercio', 'servicios'];
 
+  /* ================= Página de inicio (rediseño 26/11/2026) ================= */
   function landing() {
-    document.title = 'Gebro | Reservas, turnos, ventas y caja para tu negocio';
-    var wa = 'https://wa.me/' + CONFIG.WHATSAPP + '?text=' + encodeURIComponent('Hola, quiero saber más sobre Gebro.');
-    var detalles = {
-      hoteleria: [['Calendario de reservas', 'que avisa si se pisan dos huéspedes'], ['Check-in y check-out', 'con la cuenta de consumos lista'], ['Estado de cada habitación', 'libre, ocupada, en limpieza'], ['Señas y cobros', 'que se anotan solos en la caja']],
-      comercio: [['Ventas en segundos', 'que descuentan el stock solas'], ['Aviso de reposición', 'cuando un producto baja del mínimo'], ['Proveedores', 'con sus datos a mano'], ['Caja diaria', 'por medio de pago']],
-      servicios: [['Agenda por profesional', 'con los horarios de cada uno'], ['Turnos sin superposición', 'según la duración del servicio'], ['Atendido o ausente', 'en un toque, y se cobra'], ['Fichas de pacientes', 'y clientes con su historial']],
-      ferreteria: [['Venta por metro, kilo o unidad', 'con lector de código de barras'], ['Presupuestos', 'para obras y clientes'], ['Stock y reposición', 'con aviso de faltantes'], ['Proveedores', 'y caja diaria']],
-      farmacia: [['Vencimientos de medicamentos', 'con aviso de los próximos 90 días'], ['Venta libre o bajo receta', 'marcado en cada producto'], ['Obra social', 'en la ficha de cada cliente'], ['Lector de códigos', 'para vender en segundos']],
-      contadores: [['Vencimientos de cada cliente', 'IVA, Monotributo, Ganancias y más'], ['CUIT validado', 'y su constancia de ARCA a un clic'], ['Accesos directos a ARCA', 'con Clave Fiscal'], ['Honorarios', 'a cobrar y cobrados, por cliente']],
-      freelancer: [['Cada cliente con sus proyectos', 'todo en la misma ficha'], ['Avance y fecha de entrega', 'de cada proyecto'], ['Tareas y horas trabajadas', 'para saber cuánto te lleva cada uno'], ['Anticipos y saldos', 'lo cobrado y lo que falta cobrar']],
-      abogados: [['Expedientes', 'con carátula, fuero y juzgado'], ['Agenda de plazos y audiencias', 'para que no se pase ninguno'], ['Constitución Nacional', 'a un clic desde el sistema'], ['Honorarios', 'y anticipos por cliente']]
+    document.title = 'Gebro | Sistema de gestión para pymes y comercios';
+    document.body.classList.add('lp-body');
+    window.onscroll = null;
+    var waTxt = function (t) { return 'https://wa.me/' + CONFIG.WHATSAPP + '?text=' + encodeURIComponent(t); };
+    var waDemo = waTxt('Hola, quiero pedir una demo de Gebro.');
+    var tilde = function (color) { return '<svg class="lp-tilde" viewBox="0 0 24 24" aria-hidden="true" style="stroke:' + (color || '#F3C623') + '"><path d="M5 12l5 5L20 7"/></svg>'; };
+    var icono = function (d) { return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="' + d + '"/></svg>'; };
+    var planes = CONFIG.PLANES || [];
+    var meses = +CONFIG.MESES_GRATIS_ANUAL || 0;
+    var carta = CONFIG.MODULOS_CARTA || [];
+    var base = (planes.filter(function (p) { return p.precio; })[0] || { precio: 0 });
+    var pesos = function (n) { return '$' + String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, '.'); };
+
+    var pilares = [
+      ['Accesible', 'Tecnología de gestión al alcance de negocios chicos y medianos. Pagás por mes lo que usás, sin licencias ni equipos caros.', 'M20.6 13.4l-7.2 7.2a2 2 0 0 1-2.8 0L3 13V3h10l7.6 7.6a2 2 0 0 1 0 2.8zM7.5 7.5h.01'],
+      ['Simple', 'Pantallas claras y en criollo. Si sabés usar el celular, sabés usar Gebro. Lo aprendés en una tarde.', 'M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20zM8 12l3 3 5-6'],
+      ['Rentable', 'Menos errores de caja, stock al día y números claros para saber qué te deja plata y qué no.', 'M3 17l6-6 4 4 8-8M15 7h6v6']
+    ];
+    var funciones = [
+      ['Ventas y caja', 'Registrá cada venta en segundos y cerrá la caja sabiendo cuánto entró y por dónde.', 'M3 6h18v13H3zM3 10h18M7 15h4'],
+      ['Productos y stock', 'Stock que se descuenta solo, aviso de reposición y lector de códigos con la cámara.', 'M21 8l-9-5-9 5v8l9 5 9-5zM3 8l9 5 9-5M12 13v8'],
+      ['Clientes y proveedores', 'Fichas con historial, lo que falta cobrar y los datos de contacto a mano.', 'M16 20v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 10a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM22 20v-2a4 4 0 0 0-3-3.9M16 2.1a4 4 0 0 1 0 7.8'],
+      ['Reservas y turnos', 'Calendario de reservas y agenda por profesional que avisan si algo se pisa.', 'M3 5h18v16H3zM3 10h18M8 3v4M16 3v4'],
+      ['Cobros con Mercado Pago', 'Mandá un link de pago por WhatsApp y, cuando te pagan, se anota solo en la caja.', 'M2 7h20v12H2zM2 11h20M6 15h3'],
+      ['Usuarios y permisos', 'Sumá a tu equipo con su cuenta de Google. Vos mantenés el control.', 'M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4']
+    ];
+    var rubros = Object.keys(R).filter(function (k) { return k !== 'general'; });
+    var preguntas = [
+      ['¿Tengo que instalar algo?', 'No. Entrás con tu cuenta de Google desde el navegador, en la computadora del mostrador o en el celular.'],
+      ['¿Puedo probarlo antes?', 'Sí. La demo usa datos de ejemplo y funciona sin registrarte. Elegí tu rubro y recorrela.'],
+      ['¿Hay permanencia?', 'No. Pagás por mes y das de baja cuando quieras. Los primeros 30 días son sin cargo.'],
+      ['¿Cómo sumo un módulo?', 'Elegís los que necesitás y nos mandás el pedido. Por seguridad, los módulos los activa el administrador de Gebro en tu cuenta.'],
+      ['¿Mis datos están separados de los de otros negocios?', 'Sí. Cada negocio tiene su propia base de datos y cada persona entra con su cuenta y los permisos que le des.'],
+      ['¿Quién me ayuda si tengo un problema?', 'El equipo de CreaMix-DS, que es quien desarrolla Gebro. Nos escribís por WhatsApp o mail y te responden personas, no un bot.']
+    ];
+
+    var precioPlan = function (p) { return meses ? p.precio * (12 - meses) / 12 : p.precio; };
+    var tarjetaPlan = function (p) {
+      return '<article class="lp-plan' + (p.destacado ? ' lp-plan-dest' : '') + '">' + (p.destacado ? '<span class="lp-etq">El más elegido</span>' : '') +
+        '<h3>' + esc(p.nombre) + '</h3><p class="lp-plan-para">' + esc(p.para) + '</p>' +
+        '<div class="lp-precio">' + (p.precio ? '<b data-precio="' + p.precio + '">' + pesos(precioPlan(p)) + '</b><span>/mes</span>' : '<b class="lp-convenir">A convenir</b>') + '</div>' +
+        '<p class="lp-plan-nota" data-nota="' + (p.precio || '') + '">' + (p.precio ? (meses ? 'Pagando el año: ' + pesos(p.precio * (12 - meses)) : 'Facturación mensual · sin permanencia') : 'Lo armamos con vos') + '</p>' +
+        '<a class="lp-btn ' + (p.destacado ? 'lp-btn-negro' : 'lp-btn-borde') + '" href="' + waTxt('Hola, me interesa el plan ' + p.nombre + ' de Gebro.') + '" target="_blank" rel="noopener">' + (p.precio ? 'Quiero el plan ' + esc(p.nombre) : 'Hablemos') + '</a>' +
+        '<ul>' + (p.incluye || []).map(function (x) { return '<li>' + tilde(p.destacado ? '#0F3D2E' : null) + '<span>' + esc(x) + '</span></li>'; }).join('') + '</ul></article>';
     };
-    var demoTxt = { hoteleria: 'Probar la demo de hotel', comercio: 'Probar la demo de comercio', servicios: 'Probar la demo de turnos', ferreteria: 'Probar la demo de ferretería', farmacia: 'Probar la demo de farmacia', contadores: 'Probar la demo contable', abogados: 'Probar la demo jurídica', freelancer: 'Probar la demo freelancer' };
+    var celda = function (v, i) {
+      return '<td' + (planes[i] && planes[i].destacado ? ' class="lp-col-dest"' : '') + '>' +
+        (v === true ? '<span role="img" aria-label="Incluido">' + tilde() + '</span>' : v === false ? '<span class="lp-no" aria-label="No incluido">—</span>' : '<b>' + esc(v) + '</b>') + '</td>';
+    };
 
     $app.innerHTML =
-      '<div class="web">' +
-      '<header class="web-cab"><div class="envase">' + marca() +
-      '<nav class="web-nav" aria-label="Secciones"><a href="#rubros">Rubros</a><a href="#como">Cómo funciona</a><a href="#planes">Planes</a><a href="#contacto">Contacto</a></nav>' +
-      '<div class="acciones"><a class="btn btn-2" href="#/app">Ingresar</a><a class="btn btn-1" href="#/demo/hoteleria">Probar la demo</a></div>' +
-      '</div></header>' +
+      '<div class="lp">' +
+      '<header class="lp-cab"><div class="lp-w lp-cab-in">' +
+      '<a class="lp-marca" href="#/" aria-label="Gebro, inicio">' + logo() + '<span>gebro</span></a>' +
+      '<nav class="lp-nav" aria-label="Secciones"><a href="#lp-funciones">Funciones</a><a href="#lp-rubros">Rubros</a><a href="#lp-planes">Planes</a><a href="#lp-preguntas">Preguntas</a></nav>' +
+      '<div class="lp-cab-acc"><a class="lp-ingresar" href="#/app">Ingresar</a><a class="lp-btn lp-btn-amarillo lp-chico lp-solo-pc" href="#/demo/comercio">Probar la demo</a>' +
+      '<button class="lp-hamb" type="button" aria-label="Abrir menú" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button></div>' +
+      '</div><div class="lp-menu" hidden><a href="#lp-funciones">Funciones</a><a href="#lp-rubros">Rubros</a><a href="#lp-planes">Planes y precios</a><a href="#lp-preguntas">Preguntas frecuentes</a>' +
+      '<a class="lp-btn lp-btn-amarillo" href="#/demo/comercio">Probar la demo</a><a class="lp-btn lp-btn-borde" href="#/app">Ingresar</a></div></header>' +
 
       '<main>' +
-      '<section class="heroe"><div class="envase">' +
-      '<div><h1><span class="rengln">Reservas, turnos,</span><span class="rengln">ventas y caja.</span><span class="rengln">Todo en un lugar.</span></h1>' +
-      '<p class="bajada">Gebro se adapta a tu rubro: el hotel ve sus habitaciones, la ferretería su stock, el contador los vencimientos de sus clientes y el abogado sus plazos. Cada movimiento queda anotado en la caja sin que lo cargues dos veces.</p>' +
-      '<div class="botones"><a class="btn btn-1 btn-grande" href="#/demo/hoteleria" id="heroe-demo">' + demoTxt.hoteleria + '</a>' +
-      '<a class="btn btn-2 btn-grande" href="' + wa + '" target="_blank" rel="noopener">' + ic('whatsapp') + 'Consultar por WhatsApp</a></div>' +
-      '<p class="chico">La demo usa datos de ejemplo y funciona sin registrarte.</p></div>' +
-      '<div class="vitrina" aria-label="Vista previa del sistema">' +
+      '<section class="lp-heroe"><div class="lp-w lp-heroe-in">' +
+      '<div class="lp-heroe-txt">' +
+      '<span class="lp-chip"><i></i>Sistema de gestión para pymes y comercios</span>' +
+      '<h1>Ordená tu negocio.<br><em>Cuidá cada peso.</em></h1>' +
+      '<p class="lp-bajada">Ventas, stock, caja, clientes, reservas y turnos en un solo lugar. Gebro es el sistema de gestión pensado para negocios reales: fácil de usar, accesible y listo para crecer con vos.</p>' +
+      '<div class="lp-botones"><a class="lp-btn lp-btn-amarillo lp-grande" href="#lp-planes">Ver planes y precios →</a>' +
+      '<a class="lp-btn lp-btn-negro lp-grande" href="#/demo/hoteleria" id="heroe-demo">Probar la demo</a></div>' +
+      '<div class="lp-checks"><span>' + tilde() + 'Sin instalar nada</span><span>' + tilde() + 'Celular, tablet o PC</span><span>' + tilde() + '30 días sin cargo</span></div>' +
+      '</div>' +
+      '<div class="lp-vitrina vitrina" aria-label="Vista previa del sistema">' +
       '<div class="vitrina-tabs" role="tablist">' + VITRINA.map(function (k) {
         return '<button role="tab" data-r="' + k + '" aria-selected="' + (k === vitrinaRubro) + '">' + { hoteleria: 'Hotel', comercio: 'Comercio', servicios: 'Consultorio' }[k] + '</button>';
       }).join('') + '</div>' +
       '<div class="vitrina-cuerpo" id="vitrina"></div>' +
-      '<div class="vitrina-pie"><span id="vitrina-pie"></span><a class="btn btn-chico btn-2" id="vitrina-ir" href="#/demo/hoteleria">Abrir</a></div>' +
-      '</div>' +
-      '</div></section>' +
-
-      '<section class="seccion" id="rubros"><div class="envase">' +
-      '<h2>Un sistema, hecho a la medida de cada rubro</h2>' +
-      '<p class="intro">Elegís tu rubro y Gebro te muestra solo lo que usás. Si tu negocio mezcla cosas, como una ferretería que hace presupuestos o un estudio que también cobra turnos, sumás los módulos que necesites.</p>' +
-      '<div class="rubros">' + Object.keys(R).filter(function (k) { return detalles[k]; }).map(function (k) {
-        return '<article class="rubro"><h3>' + R[k].nombre + '</h3><p class="para">' + R[k].para + '</p><ul>' +
-          detalles[k].map(function (d) { return '<li>' + ic('ok') + '<span><b>' + d[0] + '</b> ' + d[1] + '</span></li>'; }).join('') +
-          '</ul><a class="btn btn-2" href="#/demo/' + k + '">' + demoTxt[k] + '</a></article>';
-      }).join('') + '</div>' +
-      '</div></section>' +
-
-      '<section class="seccion" id="como"><div class="envase">' +
-      '<h2>Empezás hoy, sin instalar nada</h2>' +
-      '<div class="pasos">' +
-      '<div class="paso"><h3>Ingresás con tu cuenta de Google</h3><p>No hay contraseñas nuevas que recordar. Funciona en la computadora del mostrador y en el celular.</p></div>' +
-      '<div class="paso"><h3>Elegís tu rubro</h3><p>Gebro arma los módulos de tu negocio. Después podés prender o apagar los que quieras desde Ajustes.</p></div>' +
-      '<div class="paso"><h3>Cargás y listo</h3><p>Tus habitaciones, productos o servicios. Si tenés todo en un Excel, te ayudamos a pasarlo.</p></div>' +
+      '<div class="vitrina-pie"><span id="vitrina-pie"></span><a class="btn btn-chico btn-2" id="vitrina-ir" href="#/demo/hoteleria">Abrir la demo</a></div>' +
       '</div></div></section>' +
 
-      '<section class="seccion" id="planes"><div class="envase">' +
-      '<h2>Precios claros, sin permanencia</h2>' +
-      '<p class="intro">Pagás por mes y das de baja cuando quieras. Los primeros 30 días son sin cargo.</p>' +
-      '<div class="planes">' + CONFIG.PLANES.map(function (p) {
-        return '<article class="plan' + (p.destacado ? ' destacado' : '') + '">' + (p.destacado ? '<span class="etiqueta">El más elegido</span>' : '') +
-          '<h3>' + esc(p.nombre) + '</h3><p class="precio">' + (p.precio ? plata(p.precio) + ' <small>por mes</small>' : 'A convenir') + '</p>' +
-          '<p>' + esc(p.para) + '</p><ul>' + (p.incluye || []).map(function (x) { return '<li>' + ic('ok') + esc(x) + '</li>'; }).join('') + '</ul>' +
-          '<a class="btn ' + (p.destacado ? 'btn-1' : 'btn-2') + '" href="https://wa.me/' + CONFIG.WHATSAPP + '?text=' + encodeURIComponent('Hola, me interesa el plan ' + p.nombre + ' de Gebro.') + '" target="_blank" rel="noopener">' + (p.precio ? 'Quiero este plan' : 'Contame qué necesitás') + '</a></article>';
-      }).join('') + '</div>' +
-      '<p class="planes-nota">Precios finales en pesos argentinos.</p>' +
+      '<section class="lp-sec lp-sec-pilares"><div class="lp-w lp-g3">' + pilares.map(function (p) {
+        return '<div class="lp-card lp-sombra"><div class="lp-ico-negro">' + icono(p[2]) + '</div><h3>' + p[0] + '</h3><p>' + p[1] + '</p></div>';
+      }).join('') + '</div></section>' +
+
+      '<section class="lp-sec" id="lp-funciones"><div class="lp-w">' +
+      '<div class="lp-tit"><span class="lp-kick">Funciones</span><h2>Todo lo que tu negocio usa todos los días. Nada de lo que no.</h2>' +
+      '<p>Nada de pantallas eternas ni configuraciones de sistema corporativo. Gebro va directo a lo que importa para vender, controlar y decidir.</p></div>' +
+      '<div class="lp-g3">' + funciones.map(function (f) {
+        return '<div class="lp-card lp-card-2 lp-sombra"><span class="lp-ico">' + icono(f[2]) + '</span><h3>' + f[0] + '</h3><p>' + f[1] + '</p></div>';
+      }).join('') + '</div></div></section>' +
+
+      '<section class="lp-banda" id="lp-rubros"><div class="lp-w lp-sec">' +
+      '<div class="lp-tit"><span class="lp-kick">Un sistema, muchos rubros</span><h2>Se adapta a tu negocio, no al revés.</h2>' +
+      '<p>Cada rubro trae sus propias herramientas y su propio vocabulario. Probá la demo del tuyo, sin registrarte.</p></div>' +
+      '<div class="lp-g4">' + rubros.map(function (k) {
+        return '<a class="lp-rubro" href="#/demo/' + k + '"><b>' + esc(R[k].nombre) + '</b><span>' + esc(R[k].para) + '</span><i>Ver demo →</i></a>';
+      }).join('') + '</div></div></section>' +
+
+      '<section class="lp-sec lp-planes" id="lp-planes"><div class="lp-w">' +
+      '<div class="lp-tit lp-centro"><span class="lp-kick">Planes y precios</span><h2>Empezá con lo justo. <em>Sumá a medida que crecés.</em></h2>' +
+      '<p>Elegí el plan que hoy le sirve a tu negocio. Cuando necesites más, pasás al siguiente sin perder tus datos. Pagás por mes, sin permanencia, y los primeros 30 días son sin cargo.</p>' +
+      '<div class="lp-escalera"><span>1 · Empezá</span><i></i><span class="lp-esc-on">2 · Crecé</span><i></i><span>3 · A tu medida</span></div>' +
+      (meses ? '<div class="lp-pago" role="group" aria-label="Forma de pago"><button type="button" data-pago="mes" aria-pressed="true">Mensual</button><button type="button" data-pago="anio" aria-pressed="false">Anual · ' + meses + (meses === 1 ? ' mes' : ' meses') + ' gratis</button></div>' : '') +
+      '</div>' +
+      '<div class="lp-g3 lp-planes-g">' + planes.map(tarjetaPlan).join('') + '</div>' +
+      '<p class="lp-nota">Precios finales en pesos argentinos.</p>' +
+
+      (carta.length ? '<div class="lp-carta" id="lp-carta"><div class="lp-tit"><span class="lp-kick">Módulos a la carta</span><h3 class="lp-h3">Elegí solo los módulos que usás.</h3>' +
+        '<p>Partís del plan ' + esc(base.nombre || 'Inicial') + ' y elegís módulos de a uno. Nos mandás el pedido y el administrador los activa en tu cuenta. Pagás solo lo que tenés activo.</p></div>' +
+        '<div class="lp-carta-g"><div class="lp-mods">' + carta.map(function (m, i) {
+          return '<button type="button" class="lp-mod" data-mod="' + i + '" aria-pressed="false"><span class="lp-sw" aria-hidden="true"><i></i></span>' +
+            '<span class="lp-mod-txt"><span class="lp-mod-top"><b>' + esc(m.nombre) + '</b><span>+' + pesos(m.precio) + '</span></span><span class="lp-mod-det">' + esc(m.detalle) + '</span></span></button>';
+        }).join('') + '</div>' +
+        '<aside class="lp-resumen" aria-live="polite"><b class="lp-res-tit">Tu plan a medida</b>' +
+        '<div class="lp-res-fila"><span>Plan ' + esc(base.nombre || 'Inicial') + '</span><b>' + pesos(base.precio || 0) + '</b></div>' +
+        '<div id="lp-res-mods"></div><div class="lp-res-linea"></div>' +
+        '<div class="lp-res-total"><b id="lp-total">' + pesos(base.precio || 0) + '</b><span>/mes</span></div>' +
+        '<p class="lp-res-sug" id="lp-sug" hidden></p>' +
+        '<a class="lp-btn lp-btn-amarillo" id="lp-pedir" target="_blank" rel="noopener" href="#">Enviar pedido al administrador</a>' +
+        '<p class="lp-res-nota">' + icono('M5 11h14v10H5zM8 11V7a4 4 0 0 1 8 0v4') + 'Por seguridad, los módulos solo los activa el administrador. Te confirmamos por WhatsApp cuando estén listos.</p>' +
+        '<button type="button" class="lp-limpiar" id="lp-limpiar">Limpiar selección</button></aside></div></div>' : '') +
+
+      '<div class="lp-medida"><div><b>¿Tu negocio necesita algo distinto?</b><span>En CreaMix-DS desarrollamos módulos a medida sobre Gebro.</span></div>' +
+      '<a class="lp-btn lp-btn-blanco" href="' + waTxt('Hola, quiero consultar por un módulo a medida en Gebro.') + '" target="_blank" rel="noopener">Hablemos</a></div>' +
+
+      ((CONFIG.COMPARACION || []).length ? '<h3 class="lp-h3 lp-comp-tit">Compará los planes</h3><div class="lp-tabla-box"><table class="lp-tabla"><thead><tr><th scope="col">Qué incluye</th>' +
+        planes.map(function (p) { return '<th scope="col"' + (p.destacado ? ' class="lp-col-dest-cab"' : '') + '>' + esc(p.nombre) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        CONFIG.COMPARACION.map(function (r) { return '<tr><th scope="row">' + esc(r[0]) + '</th>' + r.slice(1).map(celda).join('') + '</tr>'; }).join('') +
+        '</tbody></table></div><p class="lp-nota lp-izq">En el celular, deslizá la tabla hacia los costados.</p>' : '') +
       '</div></section>' +
 
-      '<section class="seccion" id="contacto"><div class="envase"><div class="cierre">' +
-      '<div><h2>¿Lo vemos juntos con los datos de tu negocio?</h2><p>Te mostramos Gebro en 20 minutos, por videollamada o en tu local si estás en Tandil.</p></div>' +
-      '<div class="botones"><a class="btn btn-2 btn-grande" href="' + wa + '" target="_blank" rel="noopener">' + ic('whatsapp') + 'Escribinos</a>' +
-      '<a class="btn btn-borde btn-grande" href="mailto:' + CONFIG.EMAIL + '?subject=Gebro">' + CONFIG.EMAIL + '</a></div>' +
+      '<section class="lp-sec lp-negro"><div class="lp-w"><div class="lp-tit"><span class="lp-kick">Cómo empezar</span><h2>En marcha en tres pasos.</h2></div>' +
+      '<div class="lp-g3 lp-pasos">' +
+      '<div class="lp-paso lp-paso-on"><b>01</b><h3>Ingresás con tu cuenta de Google</h3><p>No hay contraseñas nuevas que recordar. Funciona en la compu del mostrador y en el celular.</p></div>' +
+      '<div class="lp-paso"><b>02</b><h3>Armamos tu negocio</h3><p>Gebro trae los módulos de tu rubro y sumamos los que necesites.</p></div>' +
+      '<div class="lp-paso"><b>03</b><h3>Cargás y listo</h3><p>Tus productos, habitaciones o servicios. Si tenés todo en un Excel, te ayudamos a pasarlo.</p></div>' +
+      '</div></div></section>' +
+
+      '<section class="lp-sec" id="lp-preguntas"><div class="lp-w lp-angosto"><h2>Preguntas frecuentes</h2><div class="lp-faq">' +
+      preguntas.map(function (q, i) { return '<details' + (i === 0 ? ' open' : '') + '><summary>' + q[0] + '<span aria-hidden="true"></span></summary><p>' + q[1] + '</p></details>'; }).join('') +
+      '</div></div></section>' +
+
+      '<section class="lp-sec lp-sec-cierre" id="contacto"><div class="lp-w"><div class="lp-cierre">' +
+      '<h2>Tu negocio, ordenado desde hoy.</h2><p>Contanos qué hacés y te mostramos Gebro en 20 minutos, por videollamada o en tu local si estás en Tandil.</p>' +
+      '<div class="lp-botones lp-centro-f"><a class="lp-btn lp-btn-negro lp-grande" href="' + waDemo + '" target="_blank" rel="noopener">Pedir demo por WhatsApp</a>' +
+      '<a class="lp-btn lp-btn-borde-negro lp-grande" href="mailto:' + CONFIG.EMAIL + '?subject=Demo%20de%20Gebro">Escribinos por mail</a></div>' +
       '</div></div></section>' +
       '</main>' +
 
-      '<footer class="web-pie"><div class="envase"><span>' + marca() + '</span><span>Gebro es un producto de <a href="https://creamixds.com" target="_blank" rel="noopener">CreamixDS</a>, Tandil.</span><a href="#/app">Ingresar al sistema</a></div></footer>' +
+      '<footer class="lp-pie"><div class="lp-w lp-pie-in"><div><a class="lp-marca" href="#/">' + logo() + '<span>gebro</span></a>' +
+      '<p>Un producto de <a href="https://creamixds.com" target="_blank" rel="noopener">CreaMix-DS</a> · Tandil, Argentina</p></div>' +
+      '<nav aria-label="Contacto"><a href="https://wa.me/' + CONFIG.WHATSAPP + '" target="_blank" rel="noopener">WhatsApp</a><a href="mailto:' + CONFIG.EMAIL + '">' + CONFIG.EMAIL + '</a>' +
+      '<a href="https://instagram.com/creamixds" target="_blank" rel="noopener">@creamixds</a><a href="#/app">Ingresar al sistema</a></nav></div></footer>' +
       '</div>';
 
-    var cab = $app.querySelector('.web-cab');
-    window.onscroll = function () { cab.classList.toggle('con-linea', window.scrollY > 8); };
+    // Menú del celular
+    var hamb = $app.querySelector('.lp-hamb'), menu = $app.querySelector('.lp-menu');
+    hamb.onclick = function () { var abrir = menu.hidden; menu.hidden = !abrir; hamb.setAttribute('aria-expanded', abrir); };
+    menu.querySelectorAll('a').forEach(function (a) { a.addEventListener('click', function () { menu.hidden = true; hamb.setAttribute('aria-expanded', 'false'); }); });
+    // Los enlaces internos (#lp-…) no cambian la ruta: solo desplazan
+    $app.querySelectorAll('a[href^="#lp-"]').forEach(function (a) {
+      a.addEventListener('click', function (e) { var t = document.getElementById(a.getAttribute('href').slice(1)); if (t) { e.preventDefault(); t.scrollIntoView({ behavior: 'smooth', block: 'start' }); } });
+    });
+    // Mensual / anual
+    var anual = false;
+    $app.querySelectorAll('[data-pago]').forEach(function (b) {
+      b.onclick = function () {
+        anual = b.dataset.pago === 'anio';
+        $app.querySelectorAll('[data-pago]').forEach(function (x) { x.setAttribute('aria-pressed', x === b); });
+        $app.querySelectorAll('[data-precio]').forEach(function (el) { var p = +el.dataset.precio; el.textContent = pesos(anual ? p * (12 - meses) / 12 : p); });
+        $app.querySelectorAll('[data-nota]').forEach(function (el) { var p = +el.dataset.nota; if (p) el.textContent = anual ? 'Pagando el año: ' + pesos(p * (12 - meses)) : 'Facturación mensual · sin permanencia'; });
+      };
+    });
+    // Módulos a la carta
+    var elegidos = {};
+    var dest = planes.filter(function (p) { return p.destacado && p.precio; })[0];
+    function resumen() {
+      var lista = carta.filter(function (m, i) { return elegidos[i]; });
+      var total = (base.precio || 0) + lista.reduce(function (s, m) { return s + m.precio; }, 0);
+      document.getElementById('lp-res-mods').innerHTML = lista.length ? lista.map(function (m) { return '<div class="lp-res-fila"><span>' + esc(m.nombre) + '</span><b>+' + pesos(m.precio) + '</b></div>'; }).join('') :
+        '<p class="lp-res-vacio">Todavía no elegiste módulos. Tocá los que quieras sumar.</p>';
+      document.getElementById('lp-total').textContent = pesos(total);
+      var sug = document.getElementById('lp-sug');
+      sug.hidden = !(dest && total >= dest.precio);
+      if (dest) sug.textContent = 'Ojo: el plan ' + dest.nombre + ' (' + pesos(dest.precio) + '/mes) puede salirte más barato y trae más cosas.';
+      document.getElementById('lp-pedir').href = waTxt('Hola, quiero pedir la activación de estos módulos de Gebro: plan ' + (base.nombre || 'Inicial') +
+        lista.map(function (m) { return ' + ' + m.nombre; }).join('') + '. Total ' + pesos(total) + '/mes.');
+    }
+    if (carta.length) {
+      $app.querySelectorAll('[data-mod]').forEach(function (b) {
+        b.onclick = function () { var i = b.dataset.mod; elegidos[i] = !elegidos[i]; b.setAttribute('aria-pressed', !!elegidos[i]); resumen(); };
+      });
+      document.getElementById('lp-limpiar').onclick = function () { elegidos = {}; $app.querySelectorAll('[data-mod]').forEach(function (b) { b.setAttribute('aria-pressed', 'false'); }); resumen(); };
+      resumen();
+    }
+    // Vista previa del sistema (datos de la demo)
     $app.querySelectorAll('.vitrina-tabs button').forEach(function (b) {
       b.onclick = function () { vitrinaRubro = b.dataset.r; vitrina(); };
       b.onkeydown = function (e) {
@@ -924,7 +1041,7 @@
     if (!real) h += '<div class="panel-cuerpo"><p style="margin:0;color:var(--tinta-2)">En tu cuenta vas a poder pagar el plan con Mercado Pago, con débito automático todos los meses.</p></div>';
     else if (!dueno) h += '<div class="panel-cuerpo"><p style="margin:0;color:var(--tinta-2)">El pago del plan lo maneja el dueño de la cuenta.</p></div>';
     else h += '<div class="panel-cuerpo" style="display:grid;gap:12px">' +
-      '<div class="par"><div class="campo"><label for="mp-plan">Plan</label><select id="mp-plan">' + ['Inicial', 'Crecimiento', 'Pro'].map(function (p) { return '<option' + (p === e.plan ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></div>' +
+      '<div class="par"><div class="campo"><label for="mp-plan">Plan</label><select id="mp-plan">' + (CONFIG.PLANES || []).filter(function (p) { return p.precio; }).map(function (p) { return '<option' + (p.nombre === e.plan ? ' selected' : '') + '>' + esc(p.nombre) + '</option>'; }).join('') + '</select></div>' +
       '<div class="campo"><label for="mp-pagador">Mail de tu cuenta de Mercado Pago</label><input id="mp-pagador" type="email" value="' + esc((S.usuario && S.usuario.email) || '') + '"></div></div>' +
       '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-1" data-mp-pagar>Pagar con Mercado Pago</button>' +
       (e.suscripcion !== 'authorized' ? '<button class="btn btn-2" data-mp-revisar>Ya pagué, revisar</button>' : '') + '</div>' +
