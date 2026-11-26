@@ -681,3 +681,10 @@ table.tabla { width: 100%; border-collapse: collapse; font-size: 14.5px; }
 .mod-check{display:inline-flex;align-items:center;gap:7px;padding:7px 12px;border:1px solid var(--linea);border-radius:999px;background:var(--papel);cursor:pointer;font-size:14px}
 .mod-check input{margin:0}
 .mod-check:has(input:checked){border-color:var(--verde);background:var(--verde-suave);color:var(--verde-texto);font-weight:600}
+
+/* Módulos bloqueados: solo el administrador los cambia */
+.interruptor.bloqueado { cursor: default; opacity: .75; }
+.interruptor.bloqueado input { cursor: not-allowed; }
+.aviso-admin { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; background: var(--verde-suave); border-top: 1px solid var(--linea); border-bottom: 1px solid var(--linea); }
+.aviso-admin svg { width: 20px; height: 20px; flex: none; color: var(--verde-texto); }
+.aviso-admin p { flex: 1; min-width: 220px; margin: 0; color: var(--verde-texto); font-size: 14px; }

@@ -98,6 +98,8 @@
   // Dependencias: un módulo necesita los que referencia como obligatorios (según el rubro)
   function refsReq(m) { return (M[m] ? M[m].campos : []).filter(function (c) { return c.tipo === 'ref' && c.req && GEBRO.campoVisible(c, S.empresa.rubro); }).map(function (c) { return c.ref; }); }
   function cerrarDeps(lista) { var set = {}; (lista || []).forEach(function (m) { if (M[m]) set[m] = 1; }); var ch = true; while (ch) { ch = false; Object.keys(set).forEach(function (m) { refsReq(m).forEach(function (r) { if (!set[r]) { set[r] = 1; ch = true; } }); }); } return Object.keys(set); }
+  // Prender/apagar módulos: solo el administrador (cuenta DEV). En la demo se deja probar.
+  function puedeModulos() { return S.modo === 'demo' || !!(S.usuario && S.usuario.esDev); }
   function base() { return S.modo === 'demo' ? '#/demo/' + S.rubroDemo : '#/app'; }
   function et(m, id) { return Motor.etiqueta(S.db, m, id); }
   function filas(m) { return S.db[m] || []; }
@@ -131,7 +133,13 @@
       devRubros: function (datos) { return post('dev_rubros', datos || { op: 'listar' }); },
       devCrearEmpresa: function (datos) { return post('dev_crearEmpresa', { datos: datos }); },
       devAcceso: function (datos) { return post('dev_acceso', { datos: datos }); },
-      devEstado: function (datos) { return post('dev_estado', { datos: datos }); }
+      devEstado: function (datos) { return post('dev_estado', { datos: datos }); },
+      devModulos: function (datos) { return post('dev_modulos', { datos: datos }); },
+      // Mercado Pago
+      mpSuscribir: function (emp, plan, pagador) { return post('mp_suscribir', { empresa: emp, plan: plan, pagador: pagador }); },
+      mpRevisar: function (emp) { return post('mp_revisar', { empresa: emp }); },
+      mpCuenta: function (emp, op, token) { return post('mp_cuenta', { empresa: emp, op: op, token: token }); },
+      mpLink: function (emp, modulo, id, monto) { return post('mp_link', { empresa: emp, modulo: modulo, id: id, monto: monto }); }
     };
   }
   function cerrarSesion() { try { localStorage.removeItem('gebro_sesion'); localStorage.removeItem('gebro_empresa'); } catch (e) { } S.empresa = null; S.db = null; S.usuario = null; }
@@ -886,14 +894,19 @@
       '<div class="par"><div class="campo"><label for="aj-nombre">Nombre</label><input id="aj-nombre" value="' + esc(S.empresa.nombre) + '"></div>' +
       '<div class="campo"><label>Rubro principal</label><input value="' + esc(nombreRubro()) + '" readonly></div></div>' +
       '<div><button class="btn btn-1" data-guardar-nombre>Guardar nombre</button></div></div></section>';
-    html += '<section class="panel"><div class="panel-cab"><h2>Módulos</h2><span style="color:var(--tinta-3);font-size:13.5px">Prendé los que uses, aunque sean de otro rubro</span></div>';
+    html += vistaPagosMp();
+    var editMods = puedeModulos();
+    var pedir = 'https://wa.me/5492494511665?text=' + encodeURIComponent('Hola, quiero activar un módulo en Gebro para ' + (S.empresa.nombre || 'mi negocio') + ': ');
+    html += '<section class="panel"><div class="panel-cab"><h2>Módulos</h2><span style="color:var(--tinta-3);font-size:13.5px">' +
+      (S.modo === 'demo' ? 'En la demo podés probarlos. En tu cuenta los activa el administrador.' : editMods ? 'Sos administrador: podés prender y apagar módulos de esta empresa.' : 'Los módulos los activa el administrador de Gebro') + '</span></div>';
+    if (!editMods) html += '<div class="panel-cuerpo aviso-admin">' + ic('ajustes') + '<p>Por seguridad, solo el administrador puede activar o desactivar módulos. ¿Necesitás uno nuevo? Pedilo y te lo habilitamos.</p><a class="btn btn-2 btn-chico" href="' + pedir + '" target="_blank" rel="noopener">Pedir un módulo</a></div>';
     var usados = {};
     Object.keys(R).forEach(function (k) {
       var mods = R[k].modulos.filter(function (m) { return !usados[m]; });
       mods.forEach(function (m) { usados[m] = 1; });
       if (!mods.length) return;
       html += '<div class="grupo-mod"><h3>' + R[k].nombre + '</h3><div class="interruptores">' + mods.map(function (m) {
-        return '<label class="interruptor"><input type="checkbox" data-modulo="' + m + '"' + (tiene(m) ? ' checked' : '') + '>' + ic(M[m].icono) + '<span>' + esc(nombreMod(m)) + '</span></label>';
+        return '<label class="interruptor' + (editMods ? '' : ' bloqueado') + '"><input type="checkbox" data-modulo="' + m + '"' + (tiene(m) ? ' checked' : '') + (editMods ? '' : ' disabled') + '>' + ic(M[m].icono) + '<span>' + esc(nombreMod(m)) + '</span></label>';
       }).join('') + '</div></div>';
     });
     html += '</section>';
@@ -902,6 +915,55 @@
     html += '</div>';
     setTimeout(cargarUsuarios, 0);
     return html;
+  }
+  // Plan de Gebro (débito automático) + cuenta de Mercado Pago del negocio para cobrar a sus clientes
+  function vistaPagosMp() {
+    var e = S.empresa, real = S.modo === 'real', dueno = e.rol === 'dueño';
+    var ESTADOS_MP = { authorized: 'Débito automático activo', pending: 'Pago pendiente', paused: 'Pago pausado', cancelled: 'Débito cancelado' };
+    var h = '<section class="panel"><div class="panel-cab"><h2>Tu plan de Gebro</h2><span style="color:var(--tinta-3);font-size:13.5px">Plan ' + esc(e.plan || '—') + ' · ' + esc(e.estado || '') + (e.suscripcion ? ' · ' + esc(ESTADOS_MP[e.suscripcion] || e.suscripcion) : '') + '</span></div>';
+    if (!real) h += '<div class="panel-cuerpo"><p style="margin:0;color:var(--tinta-2)">En tu cuenta vas a poder pagar el plan con Mercado Pago, con débito automático todos los meses.</p></div>';
+    else if (!dueno) h += '<div class="panel-cuerpo"><p style="margin:0;color:var(--tinta-2)">El pago del plan lo maneja el dueño de la cuenta.</p></div>';
+    else h += '<div class="panel-cuerpo" style="display:grid;gap:12px">' +
+      '<div class="par"><div class="campo"><label for="mp-plan">Plan</label><select id="mp-plan">' + ['Inicial', 'Crecimiento', 'Pro'].map(function (p) { return '<option' + (p === e.plan ? ' selected' : '') + '>' + p + '</option>'; }).join('') + '</select></div>' +
+      '<div class="campo"><label for="mp-pagador">Mail de tu cuenta de Mercado Pago</label><input id="mp-pagador" type="email" value="' + esc((S.usuario && S.usuario.email) || '') + '"></div></div>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-1" data-mp-pagar>Pagar con Mercado Pago</button>' +
+      (e.suscripcion !== 'authorized' ? '<button class="btn btn-2" data-mp-revisar>Ya pagué, revisar</button>' : '') + '</div>' +
+      '<p class="ayuda-chica" style="margin:0">Se debita solo todos los meses. Si cambiás de plan, el débito anterior se cancela.</p></div>';
+    h += '</section>';
+    h += '<section class="panel"><div class="panel-cab"><h2>Cobrá con Mercado Pago</h2><span style="color:var(--tinta-3);font-size:13.5px">Links de pago para cobros y señas de reservas</span></div><div class="panel-cuerpo" style="display:grid;gap:12px">';
+    if (!real) h += '<p style="margin:0;color:var(--tinta-2)">En tu cuenta conectás tu Mercado Pago y mandás links de pago por WhatsApp. Cuando te pagan, se anota solo en la caja.</p>';
+    else if (e.cobrosMp) h += '<div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap"><span class="estado e-verde">Conectado</span><span style="flex:1;min-width:160px">' + esc(e.cuentaMp || 'Tu cuenta') + '</span>' + (dueno ? '<button class="btn btn-peligro btn-chico" data-mp-desconectar>Desconectar</button>' : '') + '</div>';
+    else if (!dueno) h += '<p style="margin:0;color:var(--tinta-2)">Todavía no está conectado. Lo conecta el dueño de la cuenta.</p>';
+    else h += '<p style="margin:0;color:var(--tinta-2)">Entrá a Mercado Pago → Tus integraciones → tu aplicación → Credenciales (de prueba para probar, de producción para cobrar de verdad), copiá el <b>Access Token</b> y pegalo acá. Queda guardado en el servidor y no se vuelve a mostrar.</p>' +
+      '<div style="display:flex;gap:8px;flex-wrap:wrap"><div class="campo" style="flex:1;min-width:220px"><label for="mp-token" class="oculto">Access Token</label><input id="mp-token" type="password" autocomplete="off" placeholder="APP_USR-…"></div><button class="btn btn-1" data-mp-conectar>Conectar</button></div>';
+    return h + '</div></section>';
+  }
+  function puedeLinkMp(m, f) {
+    return S.modo === 'real' && S.empresa.cobrosMp && f &&
+      ((m === 'honorarios' && f.estado === 'A cobrar') || (m === 'reservas' && Motor.activa(f) && num(f.total) - num(f.sena) > 0));
+  }
+  function linkMp(m, id) {
+    var f = Motor.buscar(S.db, m, id), saldo = m === 'reservas' ? num(f.total) - num(f.sena) : num(f.monto);
+    abrirCapa('<div class="cajon-cab"><h2>Link de Mercado Pago</h2><button class="btn btn-3 btn-icono" data-cerrar aria-label="Cerrar">' + ic('cerrar') + '</button></div>' +
+      '<div class="cajon-cuerpo"><p style="margin-top:0">' + esc(et('clientes', f.cliente)) + ' · ' + (m === 'reservas' ? 'saldo de la reserva ' + plata(saldo) : esc(f.concepto)) + '</p>' +
+      (m === 'reservas' ? '<div class="campo"><label for="mp-monto">Monto a cobrar (podés pedir una seña)</label><input id="mp-monto" inputmode="decimal" value="' + saldo + '"></div>' : '<p><b>' + plata(saldo) + '</b></p>') +
+      '<div id="mp-resultado"></div><div id="form-error"></div></div>' +
+      '<div class="cajon-pie"><div class="der"><button class="btn btn-3" data-cerrar>Cerrar</button><button class="btn btn-1" id="mp-generar">Generar link</button></div></div>', true);
+    document.getElementById('mp-generar').onclick = function () {
+      var b = this, montoEl = document.getElementById('mp-monto');
+      b.disabled = true; b.textContent = 'Generando…';
+      S.api.mpLink(S.empresa.id, m, id, montoEl ? montoEl.value : '').then(function (r) {
+        var tel = String((Motor.buscar(S.db, 'clientes', f.cliente) || {}).telefono || '').replace(/\D/g, '');
+        var txt = 'Hola! Te paso el link para pagar ' + plata(r.monto) + ' a ' + S.empresa.nombre + ' con Mercado Pago: ' + r.url;
+        document.getElementById('mp-resultado').innerHTML =
+          '<div class="campo"><label for="mp-url">Link para enviar</label><input id="mp-url" readonly value="' + esc(r.url) + '"></div>' +
+          '<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn btn-2 btn-chico" id="mp-copiar">Copiar</button>' +
+          '<a class="btn btn-1 btn-chico" target="_blank" rel="noopener" href="https://wa.me/' + (tel.length >= 10 ? (tel.indexOf('54') === 0 ? tel : '549' + tel) : '') + '?text=' + encodeURIComponent(txt) + '">Enviar por WhatsApp</a></div>' +
+          '<p class="ayuda-chica">Cuando te paguen, se marca solo como cobrado y se anota en la caja.</p>';
+        document.getElementById('mp-copiar').onclick = function () { (navigator.clipboard ? navigator.clipboard.writeText(r.url) : Promise.reject()).then(function () { aviso('Link copiado.'); }, function () { aviso('Copialo a mano.'); }); };
+        b.hidden = true;
+      }).catch(function (e) { b.disabled = false; b.textContent = 'Generar link'; document.getElementById('form-error').innerHTML = '<p class="error">' + esc(e.message) + '</p>'; });
+    };
   }
   function cargarUsuarios() {
     var el = document.getElementById('aj-usuarios');
@@ -1026,6 +1088,7 @@
       '<form class="cajon-cuerpo" id="formulario" novalidate>' + extra + cuerpo + '<div id="form-error"></div><button type="submit" hidden></button></form>' +
       '<div class="cajon-pie">' + (fila && !(fila.origen) ? '<button class="btn btn-peligro" id="f-borrar">Borrar</button>' : '') +
       acciones.map(function (a) { return '<button class="btn btn-2" data-accion="' + m + ':' + a.id + ':' + fila.id + '">' + esc(a.label) + '</button>'; }).join('') +
+      (puedeLinkMp(m, fila) ? '<button class="btn btn-2" data-mp-link="' + m + ':' + fila.id + '">Link de Mercado Pago</button>' : '') +
       '<div class="der"><button class="btn btn-3" data-cerrar>Cancelar</button>' + (fila && fila.origen ? '' : '<button class="btn btn-1" id="f-guardar">' + (fila ? 'Guardar cambios' : 'Guardar') + '</button>') + '</div></div>'
     );
     conectar($capa);
@@ -1187,6 +1250,7 @@
     raiz.querySelectorAll('[data-mas]').forEach(function (b) { b.onclick = function () { S.limite[b.dataset.mas] = (S.limite[b.dataset.mas] || 100) + 200; dibujar(); }; });
     raiz.querySelectorAll('[data-modulo]').forEach(function (c) {
       c.onchange = function () {
+        if (!puedeModulos()) { c.checked = !c.checked; return aviso('Solo el administrador puede activar o desactivar módulos.', true); }
         var m = c.dataset.modulo;
         var marcados = Array.prototype.map.call(document.querySelectorAll('[data-modulo]:checked'), function (x) { return x.dataset.modulo; });
         // Si lo estás apagando, no dejes el sistema roto: ¿algún módulo activo lo necesita?
@@ -1203,6 +1267,41 @@
           S.empresa = r.empresa; pantalla('ajustes');
           aviso(sumados.length ? 'Se activó también ' + sumados.map(nombreMod).join(', ') + ' porque hace falta.' : 'Módulos actualizados.');
         }).catch(function (e) { aviso(e.message, true); });
+      };
+    });
+    raiz.querySelectorAll('[data-mp-link]').forEach(function (b) {
+      b.onclick = function (e) { e.preventDefault(); var p = b.dataset.mpLink.split(':'); cerrarCapa(); linkMp(p[0], p[1]); };
+    });
+    raiz.querySelectorAll('[data-mp-pagar]').forEach(function (b) {
+      b.onclick = function () {
+        b.disabled = true; b.textContent = 'Abriendo Mercado Pago…';
+        S.api.mpSuscribir(S.empresa.id, document.getElementById('mp-plan').value, document.getElementById('mp-pagador').value.trim())
+          .then(function (r) { location.href = r.url; })
+          .catch(function (e) { b.disabled = false; b.textContent = 'Pagar con Mercado Pago'; aviso(e.message, true); });
+      };
+    });
+    raiz.querySelectorAll('[data-mp-revisar]').forEach(function (b) {
+      b.onclick = function () {
+        b.disabled = true;
+        S.api.mpRevisar(S.empresa.id).then(function (r) {
+          S.empresa = r.empresa; pantalla('ajustes');
+          aviso(r.empresa.suscripcion === 'authorized' ? '¡Listo! Tu débito automático quedó activo.' : 'Todavía no vemos el pago. Si recién pagaste, probá en un minuto.', r.empresa.suscripcion !== 'authorized');
+        }).catch(function (e) { b.disabled = false; aviso(e.message, true); });
+      };
+    });
+    raiz.querySelectorAll('[data-mp-conectar]').forEach(function (b) {
+      b.onclick = function () {
+        var inp = document.getElementById('mp-token'), tk = inp.value.trim();
+        if (!tk) return aviso('Pegá el Access Token.', true);
+        b.disabled = true; b.textContent = 'Conectando…';
+        S.api.mpCuenta(S.empresa.id, 'guardar', tk).then(function (r) { inp.value = ''; S.empresa = r.empresa; pantalla('ajustes'); aviso('Mercado Pago conectado.'); })
+          .catch(function (e) { inp.value = ''; b.disabled = false; b.textContent = 'Conectar'; aviso(e.message, true); });
+      };
+    });
+    raiz.querySelectorAll('[data-mp-desconectar]').forEach(function (b) {
+      b.onclick = function () {
+        if (!confirm('¿Desconectar Mercado Pago? Los links que ya mandaste dejan de anotarse solos en la caja.')) return;
+        S.api.mpCuenta(S.empresa.id, 'quitar').then(function (r) { S.empresa = r.empresa; pantalla('ajustes'); aviso('Mercado Pago desconectado.'); }).catch(function (e) { aviso(e.message, true); });
       };
     });
     raiz.querySelectorAll('[data-guardar-nombre]').forEach(function (b) {
@@ -1482,7 +1581,7 @@
   function pantallaDev(empresas, cat) {
     var rubros = (cat && cat.rubros) || [], modulos = (cat && cat.modulos) || [];
     var optRubros = rubros.map(function (r) { return '<option value="' + esc(r.id) + '">' + esc(r.nombre) + (r.origen === 'hoja' ? ' (propio)' : '') + '</option>'; }).join('');
-    var optPlanes = ['Prueba', 'Inicial', 'Negocio', 'A medida'];
+    var optPlanes = ['Prueba', 'Inicial', 'Crecimiento', 'Pro', 'Negocio', 'A medida'];
 
     var filas = empresas.map(function (e) {
       return '<tr data-emp="' + esc(e.id) + '">' +
@@ -1492,9 +1591,15 @@
         '<td>' + chipEstado('', e.estado).replace('e-gris', e.estado === 'Activa' ? 'e-verde' : 'e-rojo') + '</td>' +
         '<td style="white-space:nowrap">' +
           '<button class="btn btn-3 btn-chico" data-toggle>' + (e.estado === 'Activa' ? 'Suspender' : 'Reactivar') + '</button> ' +
-          '<button class="btn btn-3 btn-chico" data-accesos>Accesos</button>' +
+          '<button class="btn btn-3 btn-chico" data-accesos>Accesos</button> ' +
+          '<button class="btn btn-3 btn-chico" data-modulos>Módulos</button>' +
         '</td></tr>' +
-        '<tr class="fila-accesos" data-accesos-de="' + esc(e.id) + '" hidden><td colspan="5"><div class="accesos-caja">Cargando…</div></td></tr>';
+        '<tr class="fila-accesos" data-accesos-de="' + esc(e.id) + '" hidden><td colspan="5"><div class="accesos-caja">Cargando…</div></td></tr>' +
+        '<tr class="fila-accesos" data-modulos-de="' + esc(e.id) + '" hidden><td colspan="5"><div class="accesos-caja">' +
+          (Array.isArray(e.modulos) ? '' : '<p class="sub">El servidor todavía no informa los módulos de esta empresa: marcá los que tiene que tener.</p>') +
+          '<div class="mods-check">' + modulos.map(function (m) {
+            return '<label class="mod-check"><input type="checkbox" value="' + esc(m.id) + '"' + (Array.isArray(e.modulos) && e.modulos.indexOf(m.id) >= 0 ? ' checked' : '') + '><span>' + esc(m.nombre) + '</span></label>';
+          }).join('') + '</div><div style="margin-top:10px"><button class="btn btn-1 btn-chico" data-guardar-mods>Guardar módulos</button></div></div></td></tr>';
     }).join('');
 
     $app.innerHTML =
@@ -1571,12 +1676,28 @@
       if (ev.target.hasAttribute('data-toggle')) {
         var nuevo = e.estado === 'Activa' ? 'Suspendida' : 'Activa';
         S.api.devEstado({ empresa: id, estado: nuevo }).then(function () { devMsg(e.nombre + ' ahora está ' + nuevo + '.'); setTimeout(recargarDev, 600); }).catch(function (x) { devMsg(x.message, true); });
+      } else if (ev.target.hasAttribute('data-modulos')) {
+        var fm = document.querySelector('[data-modulos-de="' + id + '"]');
+        if (fm) fm.hidden = !fm.hidden;
       } else if (ev.target.hasAttribute('data-accesos')) {
         var fila = document.querySelector('[data-accesos-de="' + id + '"]');
         if (!fila) return;
         fila.hidden = !fila.hidden;
         if (!fila.hidden) cargarAccesosDev(id, fila.querySelector('.accesos-caja'));
       }
+    });
+    tbody.addEventListener('click', function (ev) {
+      var b = ev.target.closest('[data-guardar-mods]'); if (!b) return;
+      var fila = b.closest('tr[data-modulos-de]'); var id = fila.getAttribute('data-modulos-de');
+      var marcados = [].slice.call(fila.querySelectorAll('input:checked')).map(function (c) { return c.value; });
+      var mods = devConDeps(marcados);
+      if (!mods.length) return devMsg('Dejá al menos un módulo prendido.', true);
+      var sumados = mods.filter(function (x) { return marcados.indexOf(x) < 0; });
+      b.disabled = true; b.textContent = 'Guardando…';
+      S.api.devModulos({ empresa: id, modulos: mods }).then(function () {
+        devMsg('Módulos actualizados' + (sumados.length ? ' (se sumó ' + sumados.map(function (m) { return M[m] ? M[m].nombre : m; }).join(', ') + ' porque hace falta)' : '') + '.');
+        setTimeout(recargarDev, 700);
+      }).catch(function (x) { devMsg(x.message, true); b.disabled = false; b.textContent = 'Guardar módulos'; });
     });
     tbody.addEventListener('change', function (ev) {
       if (!ev.target.hasAttribute('data-plan')) return;
@@ -1585,6 +1706,13 @@
     });
   }
 
+  // Igual que cerrarDeps pero sin depender de la empresa abierta: suma en cascada los módulos requeridos.
+  function devConDeps(lista) {
+    var set = {}; (lista || []).forEach(function (m) { if (M[m]) set[m] = 1; });
+    var ch = true;
+    while (ch) { ch = false; Object.keys(set).forEach(function (m) { (M[m].campos || []).forEach(function (c) { if (c.tipo === 'ref' && c.req && M[c.ref] && !set[c.ref]) { set[c.ref] = 1; ch = true; } }); }); }
+    return Object.keys(set);
+  }
   function cargarAccesosDev(id, caja) {
     S.api.usuarios(id).then(function (r) {
       caja.innerHTML = '<ul class="lista">' + (r.usuarios || []).map(function (u) {
